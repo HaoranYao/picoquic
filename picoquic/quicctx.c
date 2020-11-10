@@ -3877,8 +3877,8 @@ int picoquic_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server) {
     picoquic_load_connection_data_from_file(migration_data, "connection_data");
     picoquic_cnx_t *new_connection = (malloc(sizeof(picoquic_migration_data)));
     create_picoquic_connnection_from_migration_data(migration_data, new_connection, new_server);
-    printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", new_connection->initial_cnxid.id_len);
-    printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", connection_to_migrate->initial_cnxid.id_len);
+    // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", new_connection->initial_cnxid.id_len);
+    // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", connection_to_migrate->initial_cnxid.id_len);
     return ret;
 }
 
@@ -3899,7 +3899,7 @@ int picoquic_save_connection_data(picoquic_cnx_t* cnx) {
     printf("here it is!\n");
 
     picoquic_migration_data *trans_data = (malloc(sizeof(picoquic_migration_data)));
-    // trans_data->proposed_version = cnx->proposed_version;
+    trans_data->proposed_version = cnx->proposed_version;
     trans_data->version_index = cnx->version_index;
     trans_data->is_0RTT_accepted = cnx->is_0RTT_accepted;
     trans_data->remote_parameters_received = cnx->remote_parameters_received;
@@ -4024,6 +4024,8 @@ int picoquic_save_stream_node(picoquic_stream_head_t* stream_head) {
 
 int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx, picoquic_cnx_t* new_connection, picoquic_quic_t* new_server) {
     int ret = 0;
+    //create the new local connection id
+    picoquic_local_cnxid_t* cnxid0;
     // basic data
     new_connection->proposed_version = cnx->proposed_version;
     new_connection->version_index = cnx->version_index;
@@ -4078,9 +4080,6 @@ int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx
     new_connection->next_wake_time = cnx->next_wake_time;
     memcpy(new_connection->client_secret, cnx->client_secret, sizeof(u_int8_t) * 256);
     memcpy(new_connection->server_secret, cnx->server_secret, sizeof(u_int8_t) * 256);
-
-
-
     // links to the new server
     // quic parameter!
     new_connection->quic = new_server;
@@ -4093,6 +4092,7 @@ int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx
     new_connection->callback_ctx = new_server->default_callback_ctx;
     // net_icid_key;
     // reset_secret_key;
+    // need to create the path here...
     // picoquic_register_net_icid(new_connection);
     return ret;
 
