@@ -3861,3 +3861,239 @@ void picoquic_lb_compat_cid_config_free(picoquic_quic_t* quic)
         quic->cnx_id_callback_ctx = NULL;
     }
 }
+
+
+
+int picoquic_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server) {
+    int ret = 0;
+    printf("time to migrate!\n");
+    //pick a connection to migrate
+    picoquic_cnx_t* connection_to_migrate = NULL;
+
+    //need to be changed in the future, for now just get one connection!
+    connection_to_migrate = old_server->cnx_in_progress;
+    //copy the data from the connection!
+    picoquic_save_connection_data(connection_to_migrate);
+    picoquic_migration_data *migration_data = (malloc(sizeof(picoquic_migration_data)));
+    picoquic_load_connection_data_from_file(migration_data, "connection_data");
+    picoquic_cnx_t *new_connection = (malloc(sizeof(picoquic_migration_data)));
+    create_picoquic_connnection_from_migration_data(migration_data, new_connection, new_server);
+    
+    return ret;
+}
+
+/*
+what has been missed
+    struct st_picoquic_net_icid_key_t* net_icid_key;
+    struct st_picoquic_net_secret_key_t* reset_secret_key;
+
+    picoquic_stream_data_cb_fn callback_fn;
+    void* callback_ctx;
+    struct st_picoquic_net_icid_key_t* net_icid_key;
+    struct st_picoquic_net_secret_key_t* reset_secret_key;
+    picoquic_tlscontext_create ---> to migrate the tls_ctx
+*/
+
+int picoquic_save_connection_data(picoquic_cnx_t* cnx) {
+
+    printf("here it is!\n");
+
+    picoquic_migration_data *trans_data = (malloc(sizeof(picoquic_migration_data)));
+    trans_data->proposed_version = cnx->proposed_version;
+    trans_data->version_index = cnx->version_index;
+    trans_data->is_0RTT_accepted = cnx->is_0RTT_accepted;
+    trans_data->remote_parameters_received = cnx->remote_parameters_received;
+    trans_data->client_mode = cnx->client_mode;
+    trans_data->key_phase_enc = cnx->key_phase_enc;
+    trans_data->key_phase_dec = cnx->key_phase_dec;
+    trans_data->zero_rtt_data_accepted = cnx->zero_rtt_data_accepted;
+    trans_data->sending_ecn_ack = cnx->sending_ecn_ack;
+    trans_data->sent_blocked_frame = cnx->sent_blocked_frame;
+    trans_data->stream_blocked_bidir_sent = cnx->stream_blocked_bidir_sent;
+    trans_data->stream_blocked_unidir_sent = cnx->stream_blocked_unidir_sent;
+    trans_data->max_stream_data_needed = cnx->max_stream_data_needed;
+    trans_data->path_demotion_needed = cnx->path_demotion_needed;
+    trans_data->alt_path_challenge_needed = cnx->alt_path_challenge_needed;
+    trans_data->is_handshake_finished = cnx->is_handshake_finished;
+    trans_data->is_1rtt_received = cnx->is_1rtt_received;
+    trans_data->is_1rtt_acked = cnx->is_1rtt_acked;
+    trans_data->has_successful_probe = cnx->has_successful_probe;
+    trans_data->grease_transport_parameters = cnx->grease_transport_parameters;
+    trans_data->test_large_chello = cnx->test_large_chello;
+    trans_data->initial_validated = cnx->initial_validated;
+    trans_data->initial_repeat_needed = cnx->initial_repeat_needed;
+    trans_data->is_loss_bit_enabled_incoming = cnx->is_loss_bit_enabled_incoming;
+    trans_data->is_loss_bit_enabled_outgoing = cnx->is_loss_bit_enabled_outgoing;
+    // trans_data->is_one_way_delay_enabled = cnx->is_one_way_delay_enabled;
+    trans_data->is_pmtud_required = cnx->is_pmtud_required;
+    trans_data->is_ack_frequency_negotiated = cnx->is_ack_frequency_negotiated;
+    trans_data->is_ack_frequency_updated = cnx->is_ack_frequency_updated;
+    trans_data->recycle_sooner_needed = cnx->recycle_sooner_needed;
+    trans_data->spin_policy = cnx->spin_policy;
+    trans_data->idle_timeout = cnx->idle_timeout;
+    memcpy(&trans_data->local_parameters, &cnx->local_parameters, sizeof(picoquic_tp_t));
+    memcpy(&trans_data->remote_parameters, &cnx->remote_parameters, sizeof(picoquic_tp_t));
+    // trans_data->local_parameters = cnx->local_parameters;
+    // trans_data->remote_parameters = cnx->remote_parameters;
+    trans_data->padding_multiple = cnx->padding_multiple;
+    trans_data->padding_minsize = cnx->padding_minsize;
+    trans_data->initial_cnxid = cnx->initial_cnxid;
+    trans_data->sni = picoquic_string_duplicate(cnx->sni);
+    trans_data->alpn = picoquic_string_duplicate(cnx->alpn);
+    trans_data->max_early_data_size = cnx->max_early_data_size;
+    trans_data->cnx_state = cnx->cnx_state;
+    memcpy(&trans_data->initial_cnxid, &cnx->initial_cnxid, sizeof(picoquic_connection_id_t));
+    memcpy(&trans_data->original_cnxid, &cnx->original_cnxid, sizeof(picoquic_connection_id_t));
+    trans_data->start_time = cnx->start_time;
+    trans_data->application_error = cnx->application_error;
+    trans_data->local_error = cnx->local_error;
+    trans_data->remote_application_error = cnx->remote_application_error;
+    trans_data->remote_error = cnx->remote_error;
+    trans_data->offending_frame_type = cnx->offending_frame_type;
+    trans_data->retry_token_length = cnx->retry_token_length;
+    // trans_data->retry_token = picoquic_string_duplicate(cnx->sni);
+    trans_data->next_wake_time = cnx->next_wake_time;
+    memcpy(trans_data->client_secret, cnx->client_secret, sizeof(u_int8_t) * 256);
+    memcpy(trans_data->server_secret, cnx->server_secret, sizeof(u_int8_t) * 256);
+    picoquic_save_stream_node(cnx->first_output_stream);
+    picoquic_sava_connection_data_to_file(trans_data, "connection_data");
+    return 0;
+}
+
+int picoquic_sava_connection_data_to_file(picoquic_migration_data * data, char * file_name) {
+    int fd = open(file_name, O_RDWR | O_CREAT | O_TRUNC, 0644);
+    int ret = -1;
+    int iFinish = 0;
+    int iLeft = sizeof(*data);
+    while (1)
+    {
+        if (iLeft > 4086)
+        {
+            ret = write(fd, (char *)data + iFinish, 4096);
+        }
+        else
+        {
+            ret = write(fd, (char *)data + iFinish, iLeft);
+            break;
+        }
+        iFinish += ret;
+        iLeft -= ret;
+    }
+    close(fd);
+    return 0;
+}
+
+int picoquic_load_connection_data_from_file(picoquic_migration_data * data, char * file_name) {
+    int fd = open(file_name, O_RDONLY);
+    int ret = -1;
+    int iFinish = 0;
+    while (1)
+    {
+        // printf("GOGOGO\n");
+        ret = read(fd, (char *)data + iFinish, 4096);
+        iFinish += ret;
+        if (ret == 0)
+        {
+            break;
+        }
+    }
+    close(fd);
+    return 0;
+}
+
+
+// int picoquic_load_connection_info() {
+
+// }
+
+int picoquic_save_stream_node(picoquic_stream_head_t* stream_head) {
+    int ret = 1;
+    // count is the number of stream nodes in the double-linked list
+    int count = 1;
+    picoquic_stream_head_t* temp;
+    temp = stream_head;
+    while (temp->next_output_stream != NULL)
+    {
+        count++;
+        temp = temp->next_output_stream;
+        /* code */
+    }
+    printf("For now count is %d\n", count);
+    return ret;
+}
+
+int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx, picoquic_cnx_t* new_connection, picoquic_quic_t* new_server) {
+    int ret = 0;
+    // basic data
+    new_connection->proposed_version = cnx->proposed_version;
+    new_connection->version_index = cnx->version_index;
+    new_connection->is_0RTT_accepted = cnx->is_0RTT_accepted;
+    new_connection->remote_parameters_received = cnx->remote_parameters_received;
+    new_connection->client_mode = cnx->client_mode;
+    new_connection->key_phase_enc = cnx->key_phase_enc;
+    new_connection->key_phase_dec = cnx->key_phase_dec;
+    new_connection->zero_rtt_data_accepted = cnx->zero_rtt_data_accepted;
+    new_connection->sending_ecn_ack = cnx->sending_ecn_ack;
+    new_connection->sent_blocked_frame = cnx->sent_blocked_frame;
+    new_connection->stream_blocked_bidir_sent = cnx->stream_blocked_bidir_sent;
+    new_connection->stream_blocked_unidir_sent = cnx->stream_blocked_unidir_sent;
+    new_connection->max_stream_data_needed = cnx->max_stream_data_needed;
+    new_connection->path_demotion_needed = cnx->path_demotion_needed;
+    new_connection->alt_path_challenge_needed = cnx->alt_path_challenge_needed;
+    new_connection->is_handshake_finished = cnx->is_handshake_finished;
+    new_connection->is_1rtt_received = cnx->is_1rtt_received;
+    new_connection->is_1rtt_acked = cnx->is_1rtt_acked;
+    new_connection->has_successful_probe = cnx->has_successful_probe;
+    new_connection->grease_transport_parameters = cnx->grease_transport_parameters;
+    new_connection->test_large_chello = cnx->test_large_chello;
+    new_connection->initial_validated = cnx->initial_validated;
+    new_connection->initial_repeat_needed = cnx->initial_repeat_needed;
+    new_connection->is_loss_bit_enabled_incoming = cnx->is_loss_bit_enabled_incoming;
+    new_connection->is_loss_bit_enabled_outgoing = cnx->is_loss_bit_enabled_outgoing;
+    // new_connection->is_one_way_delay_enabled = cnx->is_one_way_delay_enabled;
+    new_connection->is_pmtud_required = cnx->is_pmtud_required;
+    new_connection->is_ack_frequency_negotiated = cnx->is_ack_frequency_negotiated;
+    new_connection->is_ack_frequency_updated = cnx->is_ack_frequency_updated;
+    new_connection->recycle_sooner_needed = cnx->recycle_sooner_needed;
+    new_connection->spin_policy = cnx->spin_policy;
+    new_connection->idle_timeout = cnx->idle_timeout;
+    memcpy(&new_connection->local_parameters, &cnx->local_parameters, sizeof(picoquic_tp_t));
+    memcpy(&new_connection->remote_parameters, &cnx->remote_parameters, sizeof(picoquic_tp_t));
+    new_connection->padding_multiple = cnx->padding_multiple;
+    new_connection->padding_minsize = cnx->padding_minsize;
+    new_connection->initial_cnxid = cnx->initial_cnxid;
+    new_connection->sni = picoquic_string_duplicate(cnx->sni);
+    new_connection->alpn = picoquic_string_duplicate(cnx->alpn);
+    new_connection->max_early_data_size = cnx->max_early_data_size;
+    new_connection->cnx_state = cnx->cnx_state;
+    memcpy(&new_connection->initial_cnxid, &cnx->initial_cnxid, sizeof(picoquic_connection_id_t));
+    memcpy(&new_connection->original_cnxid, &cnx->original_cnxid, sizeof(picoquic_connection_id_t));
+    new_connection->start_time = cnx->start_time;
+    new_connection->application_error = cnx->application_error;
+    new_connection->local_error = cnx->local_error;
+    new_connection->remote_application_error = cnx->remote_application_error;
+    new_connection->remote_error = cnx->remote_error;
+    new_connection->offending_frame_type = cnx->offending_frame_type;
+    new_connection->retry_token_length = cnx->retry_token_length;
+    new_connection->next_wake_time = cnx->next_wake_time;
+    memcpy(new_connection->client_secret, cnx->client_secret, sizeof(u_int8_t) * 256);
+    memcpy(new_connection->server_secret, cnx->server_secret, sizeof(u_int8_t) * 256);
+
+
+
+    // links to the new server
+    // quic parameter!
+    new_connection->quic = new_server;
+    // next_in_table;
+    // previous_in_table;
+    picoquic_insert_cnx_in_list(new_server, new_connection);
+    // callback_fn;
+    // callback_ctx;
+    new_connection->callback_fn = new_server->default_callback_fn;
+    new_connection->callback_ctx = new_server->default_callback_ctx;
+    // net_icid_key;
+    // reset_secret_key;
+    picoquic_register_net_icid(new_connection);
+    return ret;
+
+}
