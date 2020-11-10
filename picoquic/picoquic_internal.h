@@ -30,6 +30,15 @@
 #include "picosplay.h"
 #include "picoquic.h"
 #include "picoquic_utils.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1002,6 +1011,9 @@ typedef struct st_picoquic_cnx_t {
     struct st_ptls_buffer_t* tls_sendbuf;
     uint16_t psk_cipher_suite_id;
 
+    uint8_t client_secret[256]; /*store the secret for migration*/
+    uint8_t server_secret[256];
+    
     picoquic_stream_head_t tls_stream[PICOQUIC_NUMBER_OF_EPOCHS]; /* Separate input/output from each epoch */
     picoquic_crypto_context_t crypto_context[PICOQUIC_NUMBER_OF_EPOCHS]; /* Encryption and decryption objects */
     picoquic_crypto_context_t crypto_context_old; /* Old encryption and decryption context after key rotation */
@@ -1108,6 +1120,219 @@ typedef struct st_picoquic_cnx_t {
     char* binlog_file_name;
 
 } picoquic_cnx_t;
+
+typedef struct st_qicoquic_migraiton_data {
+    /* Proposed and negotiated version. Feature flags denote version dependent features */
+    uint32_t proposed_version;
+    int version_index;
+
+    /* Series of flags showing the state or choices of the connection */
+    /* these int parameters can be transferred directly */
+    unsigned int is_0RTT_accepted : 1; /* whether 0-RTT is accepted */
+    unsigned int remote_parameters_received : 1; /* whether remote parameters where received */
+    unsigned int client_mode : 1; /* Is this connection the client side? */
+    unsigned int key_phase_enc : 1; /* Key phase used in outgoing packets */
+    unsigned int key_phase_dec : 1; /* Key phase expected in incoming packets */
+    unsigned int zero_rtt_data_accepted : 1; /* Peer confirmed acceptance of zero rtt data */
+    unsigned int sending_ecn_ack : 1; /* ECN data has been received, should be copied in acks */
+    unsigned int sent_blocked_frame : 1; /* Blocked frame has been sent */
+    unsigned int stream_blocked_bidir_sent : 1; /* If stream_blocked has been sent to peer and no stream limit update since */
+    unsigned int stream_blocked_unidir_sent : 1; /* If stream_blocked has been sent to peer and no stream limit update since */
+    unsigned int max_stream_data_needed : 1; /* If at least one stream needs more data */
+    unsigned int path_demotion_needed : 1; /* If at least one path was recently demoted */
+    unsigned int alt_path_challenge_needed : 1; /* If at least one alt path challenge is needed or in progress */
+    unsigned int is_handshake_finished : 1; /* If there are no more packets to ack or retransmit in initial  or handshake contexts */
+    unsigned int is_1rtt_received : 1; /* If at least one 1RTT packet has been received */
+    unsigned int is_1rtt_acked : 1; /* If at least one 1RTT packet has been acked by the peer */
+    unsigned int has_successful_probe : 1; /* At least one probe was successful */
+    unsigned int grease_transport_parameters : 1; /* Exercise greasing of transport parameters */
+    unsigned int test_large_chello : 1; /* Add a greasing parameter to test sending CHello on multiple packets */
+    unsigned int initial_validated : 1; /* Path has been validated, DOS amplification protection is lifted */
+    unsigned int initial_repeat_needed : 1; /* Path has not been validated, repeated initial was received */
+    unsigned int is_loss_bit_enabled_incoming : 1; /* Read the loss bits in incoming packets */
+    unsigned int is_loss_bit_enabled_outgoing : 1; /* Insert the loss bits in outgoing packets */
+    unsigned int is_one_way_delay_enabled : 1; /* Add time stamp to acks, read on incoming */
+    unsigned int is_pmtud_required : 1; /* Force PMTU discovery */
+    unsigned int is_ack_frequency_negotiated : 1; /* Ack Frequency extension negotiated */
+    unsigned int is_ack_frequency_updated : 1; /* Should send an ack frequency frame asap. */
+    unsigned int recycle_sooner_needed : 1; /* There may be a need to recycle "sooner" packets */
+    
+    unsigned int is_time_stamp_enabled : 1; /* Read time stamp on on incoming */
+    unsigned int is_time_stamp_sent : 1; /* Send time stamp with ACKS */
+    unsigned int is_pacing_update_requested : 1; /* Whether the application subscribed to pacing updates */
+    unsigned int is_flow_control_limited : 1; /* Flow control window limited to initial value, mostly for tests */
+    unsigned int is_hcid_verified : 1; /* Whether the HCID was received from the peer */
+    unsigned int do_grease_quic_bit : 1; /* Negotiated grease of QUIC bit */
+    unsigned int quic_bit_greased : 1; /* Indicate whether the quic bit was greased at least once */
+    unsigned int quic_bit_received_0 : 1; /* Indicate whether the quic bit was received as zero at least once */
+    unsigned int is_half_open : 1; /* for server side connections, created but not yet complete */
+    unsigned int did_receive_short_initial : 1; /* whether peer sent unpadded initial packet */
+
+    /* Spin bit policy */
+    picoquic_spinbit_version_enum spin_policy;
+    /* Idle timeout in microseconds */
+    uint64_t idle_timeout;
+    /* Local and remote parameters */
+    /* picoquic_tp_t is a struct, so we can tranfer it directly. */
+    picoquic_tp_t local_parameters;
+    picoquic_tp_t remote_parameters;
+    /* Padding policy */
+    uint32_t padding_multiple;
+    uint32_t padding_minsize;
+
+    /* On clients, document the SNI and ALPN expected from the server */
+    /* TODO: there may be a need to propose multiple ALPN */
+    /* sin and alpn are pointers, we need to change it to list */
+    char* sni;
+    char* alpn;
+    /* On clients, receives the maximum 0RTT size accepted by server */
+    size_t max_early_data_size;
+
+    /* connection state, ID, etc. Todo: allow for multiple cnxid */
+    picoquic_state_enum cnx_state;
+    /* picoquic_connection_id_t is a struct without pointers. */
+    picoquic_connection_id_t initial_cnxid;
+    picoquic_connection_id_t original_cnxid;
+
+    uint64_t start_time;
+    uint16_t application_error;
+    uint16_t local_error;
+    uint16_t remote_application_error;
+    uint16_t remote_error;
+    uint64_t offending_frame_type;
+    uint16_t retry_token_length;
+
+    uint8_t * retry_token;
+
+
+    /* Next time sending data is expected */
+    uint64_t next_wake_time;
+    picosplay_node_t cnx_wake_node;
+
+    /* TLS context, TLS Send Buffer, streams, epochs */
+    void* tls_ctx;
+    uint64_t crypto_epoch_length_max;
+    uint64_t crypto_epoch_sequence;
+    uint64_t crypto_rotation_sequence;
+    uint64_t crypto_rotation_time_guard;
+    struct st_ptls_buffer_t* tls_sendbuf;
+    uint16_t psk_cipher_suite_id;
+
+
+    uint8_t client_secret[256];
+    uint8_t server_secret[256];
+
+    picoquic_stream_head_t tls_stream[PICOQUIC_NUMBER_OF_EPOCHS]; /* Separate input/output from each epoch */
+    picoquic_crypto_context_t crypto_context[PICOQUIC_NUMBER_OF_EPOCHS]; /* Encryption and decryption objects */
+    picoquic_crypto_context_t crypto_context_old; /* Old encryption and decryption context after key rotation */
+    picoquic_crypto_context_t crypto_context_new; /* New encryption and decryption context just before key rotation */
+
+    uint64_t crypto_failure_count;
+    /* Liveness detection */
+    uint64_t latest_progress_time; /* last local time at which the connection progressed */
+
+
+    /* Sequence and retransmission state */
+    picoquic_packet_context_t pkt_ctx[picoquic_nb_packet_context];
+
+    /* Statistics */
+    uint64_t nb_bytes_queued;
+    uint32_t nb_zero_rtt_sent;
+    uint32_t nb_zero_rtt_acked;
+    uint32_t nb_zero_rtt_received;
+    uint64_t nb_packets_received;
+    uint64_t nb_trains_sent;
+    uint64_t nb_trains_short;
+    uint64_t nb_trains_blocked_cwin;
+    uint64_t nb_trains_blocked_pacing;
+    uint64_t nb_trains_blocked_others;
+    uint64_t nb_packets_sent;
+    uint64_t nb_packets_logged;
+    uint64_t nb_retransmission_total;
+    uint64_t nb_spurious;
+    uint64_t nb_crypto_key_rotations;
+    unsigned int cwin_blocked : 1;
+    unsigned int flow_blocked : 1;
+    unsigned int stream_blocked : 1;
+    /* Congestion algorithm */
+    picoquic_congestion_algorithm_t const* congestion_alg;
+    uint64_t pacing_rate_signalled;
+    uint64_t pacing_increase_threshold;
+    uint64_t pacing_decrease_threshold;
+
+    /* Data accounting for limiting amplification attacks */
+    uint64_t initial_data_received;
+    uint64_t initial_data_sent;
+
+    /* Flow control information */
+    uint64_t data_sent;
+    uint64_t data_received;
+    uint64_t maxdata_local;
+    uint64_t maxdata_remote;
+    uint64_t max_stream_id_bidir_local;
+    uint64_t max_stream_id_bidir_local_computed;
+    uint64_t max_stream_id_unidir_local;
+    uint64_t max_stream_id_unidir_local_computed;
+    uint64_t max_stream_id_bidir_remote;
+    uint64_t max_stream_id_unidir_remote;
+
+    /* Queue for frames waiting to be sent */
+    picoquic_misc_frame_header_t* first_misc_frame;
+    picoquic_misc_frame_header_t* last_misc_frame;
+
+    /* Management of streams */
+    picosplay_tree_t stream_tree;
+    picoquic_stream_head_t * first_output_stream;
+    picoquic_stream_head_t * last_output_stream;
+    uint64_t high_priority_stream_id;
+    uint64_t next_stream_id[4];
+
+    /* Retransmit queue contains congestion controlled frames that should
+     * be sent in priority when the congestion window opens. */
+    struct st_picoquic_misc_frame_header_t* stream_frame_retransmit_queue;
+    struct st_picoquic_misc_frame_header_t* stream_frame_retransmit_queue_last;
+
+    /* Management of datagrams */
+    picoquic_misc_frame_header_t* first_datagram;
+    picoquic_misc_frame_header_t* last_datagram;
+
+    /* If not `0`, the connection will send keep alive messages in the given interval. */
+    uint64_t keep_alive_interval;
+
+    /* Management of paths */
+    picoquic_path_t ** path;
+    int nb_paths;
+    int nb_path_alloc;
+    uint64_t path_sequence_next;
+
+    /* Management of the CNX-ID stash */
+    uint64_t retire_cnxid_before;
+    picoquic_cnxid_stash_t * cnxid_stash_first;
+
+    /* management of local CID stash */
+    uint64_t local_cnxid_sequence_next;
+    int nb_local_cnxid;
+    picoquic_local_cnxid_t* local_cnxid_first;
+
+    /* Management of ACK frequency */
+    uint64_t ack_frequency_sequence_local;
+    uint64_t ack_gap_local;
+    uint64_t ack_frequency_delay_local;
+    uint64_t ack_frequency_sequence_remote;
+    uint64_t ack_gap_remote;
+    uint64_t ack_delay_remote;
+
+    /* Copies of packets received too soon */
+    picoquic_stateless_packet_t* first_sooner;
+    picoquic_stateless_packet_t* last_sooner;
+
+    FILE* f_binlog;
+    char* binlog_file_name;
+} picoquic_migration_data;
+
+int picoquic_sava_connection_data_to_file(picoquic_migration_data * data, char * file_name);
+int picoquic_load_connection_data_from_file(picoquic_migration_data * data, char * file_name);
+int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx, picoquic_cnx_t* new_connection, picoquic_quic_t* new_server);
 
 typedef struct st_picoquic_packet_data_t {
     picoquic_path_t* acked_path; /* path for which ACK was received */
