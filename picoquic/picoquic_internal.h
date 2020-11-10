@@ -1331,8 +1331,9 @@ typedef struct st_qicoquic_migraiton_data {
 } picoquic_migration_data;
 
 int picoquic_sava_connection_data_to_file(picoquic_migration_data * data, char * file_name);
-int picoquic_load_connection_data_from_file(picoquic_migration_data * data, char * file_name);
+int picoquic_load_connectioaan_data_from_file(picoquic_migration_data * data, char * file_name);
 int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx, picoquic_cnx_t* new_connection, picoquic_quic_t* new_server);
+int picoquic_save_stream_node(picoquic_stream_head_t* stream_head);
 
 typedef struct st_picoquic_packet_data_t {
     picoquic_path_t* acked_path; /* path for which ACK was received */
