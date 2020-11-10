@@ -155,6 +155,7 @@ int quic_server(const char* server_name, int server_port,
     /* Start: start the QUIC process with cert and key files */
     int ret = 0;
     picoquic_quic_t* qserver = NULL;
+    picoquic_quic_t* qserver_back = NULL;
     uint64_t current_time = 0;
     picohttp_server_parameters_t picoquic_file_param;
     server_loop_cb_t loop_cb_ctx;
@@ -214,6 +215,54 @@ int quic_server(const char* server_name, int server_port,
                 }
             }
         }
+
+        /* Create QUIC context */
+        qserver_back = picoquic_create(8, pem_cert, pem_key, NULL, NULL,
+            picoquic_demo_server_callback, &picoquic_file_param,
+            cnx_id_callback, cnx_id_callback_ctx, reset_seed, current_time, NULL, NULL, NULL, 0);
+
+        if (qserver_back == NULL) {
+            printf("Could not create server context\n");
+            ret = -1;
+        }
+        else {
+            picoquic_set_alpn_select_fn(qserver_back, picoquic_demo_server_callback_select_alpn);
+            if (do_retry != 0) {
+                picoquic_set_cookie_mode(qserver_back, 1);
+            }
+            else {
+                picoquic_set_cookie_mode(qserver_back, 2);
+            }
+            qserver_back->mtu_max = mtu_max;
+
+            if (cc_algorithm == NULL) {
+                cc_algorithm = picoquic_bbr_algorithm;
+            }
+            picoquic_set_default_congestion_algorithm(qserver_back, cc_algorithm);
+
+            picoquic_set_padding_policy(qserver_back, 39, 128);
+
+            picoquic_set_binlog(qserver_back, bin_dir);
+
+            picoquic_set_qlog(qserver_back, qlog_dir);
+
+            picoquic_set_textlog(qserver_back, log_file);
+
+            picoquic_set_log_level(qserver_back, use_long_log);
+
+            if (initial_random) {
+                picoquic_set_random_initial(qserver_back, 1);
+            }
+
+            picoquic_set_key_log_file_from_env(qserver_back);
+
+            if (esni_key_file_name != NULL && esni_rr_file_name != NULL) {
+                ret = picoquic_esni_load_key(qserver_back, esni_key_file_name);
+                if (ret == 0) {
+                    ret = picoquic_esni_server_setup(qserver_back, esni_rr_file_name);
+                }
+            }
+        }
     }
 
     if (ret == 0) {
@@ -221,7 +270,8 @@ int quic_server(const char* server_name, int server_port,
 #if _WINDOWS
         ret = picoquic_packet_loop_win(qserver, server_port, 0, dest_if, server_loop_cb, &loop_cb_ctx);
 #else
-        ret = picoquic_packet_loop(qserver, server_port, 0, dest_if, server_loop_cb, &loop_cb_ctx);
+        // ret = picoquic_packet_loop(qserver, server_port, 0, dest_if, server_loop_cb, &loop_cb_ctx);
+        ret = picoquic_packet_loop_test_migration(qserver, qserver_back,server_port, 0, dest_if, server_loop_cb, &loop_cb_ctx);    
 #endif
     }
 

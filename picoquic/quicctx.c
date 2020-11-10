@@ -3869,16 +3869,16 @@ int picoquic_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server) {
     printf("time to migrate!\n");
     //pick a connection to migrate
     picoquic_cnx_t* connection_to_migrate = NULL;
-
     //need to be changed in the future, for now just get one connection!
-    connection_to_migrate = old_server->cnx_in_progress;
+    connection_to_migrate = old_server->cnx_last;
     //copy the data from the connection!
     picoquic_save_connection_data(connection_to_migrate);
     picoquic_migration_data *migration_data = (malloc(sizeof(picoquic_migration_data)));
     picoquic_load_connection_data_from_file(migration_data, "connection_data");
     picoquic_cnx_t *new_connection = (malloc(sizeof(picoquic_migration_data)));
     create_picoquic_connnection_from_migration_data(migration_data, new_connection, new_server);
-    
+    printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", new_connection->initial_cnxid.id_len);
+    printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", connection_to_migrate->initial_cnxid.id_len);
     return ret;
 }
 
@@ -3899,7 +3899,7 @@ int picoquic_save_connection_data(picoquic_cnx_t* cnx) {
     printf("here it is!\n");
 
     picoquic_migration_data *trans_data = (malloc(sizeof(picoquic_migration_data)));
-    trans_data->proposed_version = cnx->proposed_version;
+    // trans_data->proposed_version = cnx->proposed_version;
     trans_data->version_index = cnx->version_index;
     trans_data->is_0RTT_accepted = cnx->is_0RTT_accepted;
     trans_data->remote_parameters_received = cnx->remote_parameters_received;
@@ -4093,7 +4093,7 @@ int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx
     new_connection->callback_ctx = new_server->default_callback_ctx;
     // net_icid_key;
     // reset_secret_key;
-    picoquic_register_net_icid(new_connection);
+    // picoquic_register_net_icid(new_connection);
     return ret;
 
 }

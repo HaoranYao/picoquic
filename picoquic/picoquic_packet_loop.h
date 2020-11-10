@@ -47,6 +47,14 @@ int picoquic_packet_loop(picoquic_quic_t* quic,
     picoquic_packet_loop_cb_fn loop_callback,
     void * loop_callback_ctx);
 
+int picoquic_packet_loop_test_migration(picoquic_quic_t* quic,
+    picoquic_quic_t* quic_new,
+    int local_port,
+    int local_af,
+    int dest_if,
+    picoquic_packet_loop_cb_fn loop_callback,
+    void* loop_callback_ctx);
+
 #ifdef _WINDOWS
 int picoquic_packet_loop_win(picoquic_quic_t* quic,
     int local_port,
