@@ -1,0 +1,15 @@
+/home/haoran/quic_bak/picoquic/CMakeFiles/install/strip.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/install.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/edit_cache.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/rebuild_cache.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/picoquic-log.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/list_install_components.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/picoquic-core.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/clangformat.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/picoquic_sample.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/picohttp_ct.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/picoquic_ct.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/picoquicdemo.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/install/local.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/picohttp-core.dir
+/home/haoran/quic_bak/picoquic/CMakeFiles/picolog_t.dir
