@@ -3956,11 +3956,12 @@ int picoquic_save_connection_data(picoquic_cnx_t* cnx) {
     memcpy(trans_data->client_secret, cnx->client_secret, sizeof(u_int8_t) * 256);
     memcpy(trans_data->server_secret, cnx->server_secret, sizeof(u_int8_t) * 256);
     picoquic_save_stream_node(cnx->first_output_stream);
-    picoquic_sava_connection_data_to_file(trans_data, "connection_data");
+    memcpy(&trans_data->peer_addr, &cnx->path[0]->peer_addr, sizeof(trans_data->peer_addr));
+    picoquic_save_connection_data_to_file(trans_data, "connection_data");
     return 0;
 }
 
-int picoquic_sava_connection_data_to_file(picoquic_migration_data * data, char * file_name) {
+int picoquic_save_connection_data_to_file(picoquic_migration_data * data, char * file_name) {
     int fd = open(file_name, O_RDWR | O_CREAT | O_TRUNC, 0644);
     int ret = -1;
     int iFinish = 0;
@@ -4025,7 +4026,7 @@ int picoquic_save_stream_node(picoquic_stream_head_t* stream_head) {
 int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx, picoquic_cnx_t* new_connection, picoquic_quic_t* new_server) {
     int ret = 0;
     //create the new local connection id
-    picoquic_local_cnxid_t* cnxid0;
+    // picoquic_local_cnxid_t* cnxid0;
     // basic data
     new_connection->proposed_version = cnx->proposed_version;
     new_connection->version_index = cnx->version_index;
@@ -4090,6 +4091,17 @@ int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx
     // callback_ctx;
     new_connection->callback_fn = new_server->default_callback_fn;
     new_connection->callback_ctx = new_server->default_callback_ctx;
+
+
+    /*management of the path! Because that the two different servers will send packets to the same client
+    so the target socket address should be the same. We take the sockaddr from the migration data and then
+    create a path here.*/
+    struct sockaddr * addr = (malloc(sizeof(struct sockaddr)));
+    // int len = (int)sizeof(struct sockaddr);
+    // printf("size one is %ld\n", sizeof(*addr));
+    // printf("size two is %ld\n", sizeof((trans_data->peer_addr)));
+    memcpy(addr, &(cnx->peer_addr), sizeof(*addr));
+    picoquic_create_path(new_connection, new_connection->start_time, NULL, addr);
     // net_icid_key;
     // reset_secret_key;
     // need to create the path here...

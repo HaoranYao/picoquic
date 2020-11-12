@@ -1300,10 +1300,12 @@ typedef struct st_qicoquic_migraiton_data {
     uint64_t keep_alive_interval;
 
     /* Management of paths */
-    picoquic_path_t ** path;
-    int nb_paths;
-    int nb_path_alloc;
-    uint64_t path_sequence_next;
+    
+    // picoquic_path_t ** path;
+    // int nb_paths;
+    // int nb_path_alloc;
+    // uint64_t path_sequence_next;
+    struct sockaddr_storage peer_addr;
 
     /* Management of the CNX-ID stash */
     uint64_t retire_cnxid_before;
@@ -1330,7 +1332,7 @@ typedef struct st_qicoquic_migraiton_data {
     char* binlog_file_name;
 } picoquic_migration_data;
 
-int picoquic_sava_connection_data_to_file(picoquic_migration_data * data, char * file_name);
+int picoquic_save_connection_data_to_file(picoquic_migration_data * data, char * file_name);
 int picoquic_load_connection_data_from_file(picoquic_migration_data * data, char * file_name);
 int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx, picoquic_cnx_t* new_connection, picoquic_quic_t* new_server);
 int picoquic_save_stream_node(picoquic_stream_head_t* stream_head);
