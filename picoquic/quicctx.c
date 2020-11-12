@@ -4026,7 +4026,7 @@ int picoquic_save_stream_node(picoquic_stream_head_t* stream_head) {
 int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx, picoquic_cnx_t* new_connection, picoquic_quic_t* new_server) {
     int ret = 0;
     //create the new local connection id
-    // picoquic_local_cnxid_t* cnxid0;
+    picoquic_local_cnxid_t* cnxid0;
     // basic data
     new_connection->proposed_version = cnx->proposed_version;
     new_connection->version_index = cnx->version_index;
@@ -4084,15 +4084,14 @@ int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx
     // links to the new server
     // quic parameter!
     new_connection->quic = new_server;
+    cnxid0 = picoquic_create_local_cnxid(new_connection, NULL);
     // next_in_table;
     // previous_in_table;
-    picoquic_insert_cnx_in_list(new_server, new_connection);
+    
     // callback_fn;
     // callback_ctx;
     new_connection->callback_fn = new_server->default_callback_fn;
     new_connection->callback_ctx = new_server->default_callback_ctx;
-
-
     /*management of the path! Because that the two different servers will send packets to the same client
     so the target socket address should be the same. We take the sockaddr from the migration data and then
     create a path here.*/
@@ -4101,7 +4100,13 @@ int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx
     // printf("size one is %ld\n", sizeof(*addr));
     // printf("size two is %ld\n", sizeof((trans_data->peer_addr)));
     memcpy(addr, &(cnx->peer_addr), sizeof(*addr));
+    new_connection->nb_paths = 0;
     picoquic_create_path(new_connection, new_connection->start_time, NULL, addr);
+    picoquic_insert_cnx_in_list(new_server, new_connection);
+    picoquic_insert_cnx_by_wake_time(new_server, new_connection);
+    new_connection->path[0]->p_local_cnxid = cnxid0;
+    new_connection->path[0]->challenge_verified = 1;
+    picoquic_register_path(new_connection, new_connection->path[0]);
     // net_icid_key;
     // reset_secret_key;
     // need to create the path here...
