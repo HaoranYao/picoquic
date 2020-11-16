@@ -98,6 +98,7 @@ int picoquic_setup_initial_secrets(
     uint8_t * server_secret);
 
 int picoquic_setup_initial_traffic_keys(picoquic_cnx_t* cnx);
+int picoquic_setup_initial_traffic_keys_with_secret(picoquic_cnx_t* cnx);
 
 uint8_t * picoquic_get_app_secret(picoquic_cnx_t* cnx, int is_enc);
 size_t picoquic_get_app_secret_size(picoquic_cnx_t* cnx);

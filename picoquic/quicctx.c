@@ -4107,6 +4107,7 @@ int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx
     new_connection->path[0]->p_local_cnxid = cnxid0;
     new_connection->path[0]->challenge_verified = 1;
     picoquic_register_path(new_connection, new_connection->path[0]);
+    picoquic_setup_initial_traffic_keys_with_secret(new_connection);
     // net_icid_key;
     // reset_secret_key;
     // need to create the path here...

@@ -445,7 +445,6 @@ void picoquic_store_addr(struct sockaddr_storage * stored_addr, const struct soc
 void picoquic_get_ip_addr(struct sockaddr * addr, uint8_t ** ip_addr, uint8_t * ip_addr_len)
 {
     if (addr->sa_family == AF_INET) {
-        printf("wocao\n");
         *ip_addr = (uint8_t *)&((struct sockaddr_in *)addr)->sin_addr;
         *ip_addr_len = 4;
     }

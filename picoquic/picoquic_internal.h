@@ -1304,7 +1304,7 @@ typedef struct st_qicoquic_migraiton_data {
     // picoquic_path_t ** path;
     // int nb_paths;
     int nb_path_alloc;
-    // uint64_t path_sequence_next;
+    uint64_t path_sequence_next;
     struct sockaddr_storage peer_addr;
 
     /* Management of the CNX-ID stash */

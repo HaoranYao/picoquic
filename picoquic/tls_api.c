@@ -1496,6 +1496,10 @@ int picoquic_setup_initial_traffic_keys(picoquic_cnx_t* cnx)
         ret = picoquic_setup_initial_secrets(cipher, master_secret, client_secret, server_secret);
     }
 
+    //copyt the secret to the connection
+    memcpy(cnx->client_secret, client_secret, sizeof(u_int8_t) * 256);
+    memcpy(cnx->server_secret, server_secret, sizeof(u_int8_t) * 256);
+
     /* derive the initial keys */
     if (ret == 0) {
         if (!cnx->client_mode) {
@@ -1514,6 +1518,34 @@ int picoquic_setup_initial_traffic_keys(picoquic_cnx_t* cnx)
         }
     }
 
+    return ret;
+}
+
+
+
+int picoquic_setup_initial_traffic_keys_with_secret(picoquic_cnx_t* cnx)
+{
+    int ret = 0;
+    ptls_cipher_suite_t * cipher = picoquic_get_aes128gcm_sha256();
+    uint8_t *secret1, *secret2;
+
+    /* derive the initial keys */
+    if (ret == 0) {
+        if (!cnx->client_mode) {
+            secret1 = cnx->server_secret;
+            secret2 = cnx->client_secret;
+        }
+        else {
+            secret1 = cnx->client_secret;
+            secret2 = cnx->server_secret;
+        }
+        
+        ret = picoquic_set_key_from_secret(cipher, 1, 0, &cnx->crypto_context[0], secret1);
+
+        if (ret == 0) {
+            ret = picoquic_set_key_from_secret(cipher, 0, 0, &cnx->crypto_context[0], secret2);
+        }
+    }
     return ret;
 }
 
