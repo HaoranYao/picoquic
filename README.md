@@ -1,4 +1,4 @@
-# quic migration based on picoquic
+# Quic migration based on picoquic
 
 Picoquic is a minimalist implementation of the QUIC protocol, as defined by the IETF.
 The IETF spec started with the version of QUIC defined by Google and
@@ -54,3 +54,12 @@ On the client side:
 ~~~
    ./picoquicdemo 127.0.0.1 [port_number]
 ~~~
+# Current Progress
+I created a "picoquic_packet_loop_test_migration" function to replace the previous
+function to test the picoquic migration.
+In this function, on of the connection in "qserver" will be migrated to "qserver_back".
+
+In "picoquic_packet_loop_test_migration", function "picoquic_migrate" will be called to finish
+this migration. In "picoquic_migrate" function it will firstly save the data to a file(in "picoquic_save_connection_data" function).
+Then the migrated data will be loaded and function "create_picoquic_connnection_from_migration_data" will be called to restore the connection in the new server.
+
