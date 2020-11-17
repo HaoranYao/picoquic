@@ -55,11 +55,19 @@ On the client side:
    ./picoquicdemo 127.0.0.1 [port_number]
 ~~~
 # Current Progress
+
+## Main Function
 I created a "picoquic_packet_loop_test_migration" function to replace the previous
 function to test the picoquic migration.
 In this function, on of the connection in "qserver" will be migrated to "qserver_back".
 
+## Save and Restroe
 In "picoquic_packet_loop_test_migration", function "picoquic_migrate" will be called to finish
 this migration. In "picoquic_migrate" function it will firstly save the data to a file(in "picoquic_save_connection_data" function).
 Then the migrated data will be loaded and function "create_picoquic_connnection_from_migration_data" will be called to restore the connection in the new server.
+
+## Deal with the Keys
+In order to migrate the tls parameters, I added the master client and server keys in the picoquic connection object. Once the connection is created, it will
+make a backup of the clent master key and the server master (in "picoquic_setup_initial_traffic_keys" function at tls.api). These keys will be stored in the picoquic_migration data and the targer server could use the keys
+to create the same tls context as the previous server (in "picoquic_setup_initial_traffic_keys_with_secret" function at tls.api).
 
