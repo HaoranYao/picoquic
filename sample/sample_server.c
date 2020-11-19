@@ -633,30 +633,6 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
 
     printf("Starting Picoquic Sample server on port %d\n", server_port);
 
-    /* Create the QUIC context for the server */
-    current_time = picoquic_current_time();
-    /* Create QUIC context */
-    quic = picoquic_create(8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
-        sample_server_callback, &default_context, NULL, NULL, NULL, current_time, NULL, NULL, NULL, 0);
-
-    if (quic == NULL) {
-        fprintf(stderr, "Could not create server context\n");
-        ret = -1;
-    }
-    else {
-        picoquic_set_cookie_mode(quic, 2);
-
-        picoquic_set_default_congestion_algorithm(quic, picoquic_bbr_algorithm);
-
-        picoquic_set_qlog(quic, qlog_dir);
-
-        picoquic_set_log_level(quic, 1);
-
-        picoquic_set_key_log_file_from_env(quic);
-
-        printf("Build server 1 OK\n");
-    }
-
     current_time = picoquic_current_time();
     // create a back server here
     quic_back = picoquic_create(8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
@@ -680,7 +656,35 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         printf("Build server 2 OK\n");
     }
 
-    
+    sample_server_migration_ctx_t default_migration_context = { 0 };
+
+    default_migration_context.default_dir = default_dir;
+    default_migration_context.default_dir_len = strlen(default_dir);
+    default_migration_context.server_back = quic;
+
+    /* Create the QUIC context for the server */
+    current_time = picoquic_current_time();
+    /* Create QUIC context */
+    quic = picoquic_create(8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
+        sample_server_migration_callback, &default_migration_context, NULL, NULL, NULL, current_time, NULL, NULL, NULL, 0);
+
+    if (quic == NULL) {
+        fprintf(stderr, "Could not create server context\n");
+        ret = -1;
+    }
+    else {
+        picoquic_set_cookie_mode(quic, 2);
+
+        picoquic_set_default_congestion_algorithm(quic, picoquic_bbr_algorithm);
+
+        picoquic_set_qlog(quic, qlog_dir);
+
+        picoquic_set_log_level(quic, 1);
+
+        picoquic_set_key_log_file_from_env(quic);
+
+        printf("Build server 1 OK\n");
+    }
     /* Wait for packets */
     if (ret == 0) {
         ret = picoquic_packet_loop(quic, server_port, 0, 0, NULL, NULL);
