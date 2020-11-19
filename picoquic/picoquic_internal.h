@@ -1339,6 +1339,7 @@ int picoquic_load_connection_data_from_file(picoquic_migration_data * data, char
 int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx, picoquic_cnx_t* new_connection, picoquic_quic_t* new_server);
 int picoquic_save_stream_node(picoquic_stream_head_t* stream_head);
 int picoquic_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server);
+int picoquic_shallow_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server);
 int picoquic_save_connection_data(picoquic_cnx_t* cnx);
 
 typedef struct st_picoquic_packet_data_t {
