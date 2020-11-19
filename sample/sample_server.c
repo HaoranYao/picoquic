@@ -89,6 +89,14 @@ typedef struct st_sample_server_ctx_t {
     sample_server_stream_ctx_t* last_stream;
 } sample_server_ctx_t;
 
+typedef struct st_sample_server_migration_ctx_t {
+    char const* default_dir;
+    size_t default_dir_len;
+    picoquic_quic_t* server_back;
+    sample_server_stream_ctx_t* first_stream;
+    sample_server_stream_ctx_t* last_stream;
+} sample_server_migration_ctx_t;
+
 sample_server_stream_ctx_t * sample_server_create_stream_context(sample_server_ctx_t* server_ctx, uint64_t stream_id)
 {
     sample_server_stream_ctx_t* stream_ctx = (sample_server_stream_ctx_t*)malloc(sizeof(sample_server_stream_ctx_t));
@@ -359,6 +367,189 @@ int sample_server_callback(picoquic_cnx_t* cnx,
 
     return ret;
 }
+
+/* Change a migration server_ctx to normal migration server_ctx*/
+
+int build_server_ctx_from_migration_ctx(sample_server_ctx_t* server_ctx, sample_server_migration_ctx_t* server_ctx_migration)
+{
+    int ret = 0;
+    if (server_ctx != NULL && server_ctx_migration != NULL)
+    {
+        server_ctx->default_dir = server_ctx_migration->default_dir;
+        server_ctx->default_dir_len = server_ctx_migration->default_dir_len;
+        server_ctx->first_stream = server_ctx_migration->first_stream;
+        server_ctx->last_stream = server_ctx_migration->last_stream;
+    } else
+    {
+        ret = -1;
+    }
+    return ret;
+}
+/* New callback function to finish the migration function.
+ * Different from the sample_server_callback:
+ * Change the callback_ctx to callback_migration_ctx which includes another quic server.
+ */
+int sample_server_migration_callback(picoquic_cnx_t* cnx,
+    uint64_t stream_id, uint8_t* bytes, size_t length,
+    picoquic_call_back_event_t fin_or_event, void* callback_ctx, void* v_stream_ctx)
+{
+    int ret = 0;
+    sample_server_migration_ctx_t* server_ctx_migration = (sample_server_migration_ctx_t*)callback_ctx;
+    sample_server_ctx_t* server_ctx = (sample_server_ctx_t*)callback_ctx;
+    ret = build_server_ctx_from_migration_ctx(server_ctx, server_ctx_migration);
+    sample_server_stream_ctx_t* stream_ctx = (sample_server_stream_ctx_t*)v_stream_ctx;
+
+    /* If this is the first reference to the connection, the application context is set
+     * to the default value defined for the server. This default value contains the pointer
+     * to the file directory in which all files are defined.
+     */
+    if (callback_ctx == NULL || callback_ctx == picoquic_get_default_callback_context(picoquic_get_quic_ctx(cnx))) {
+        server_ctx = (sample_server_ctx_t *)malloc(sizeof(sample_server_ctx_t));
+        if (server_ctx == NULL) {
+            /* cannot handle the connection */
+            picoquic_close(cnx, PICOQUIC_ERROR_MEMORY);
+            return -1;
+        }
+        else {
+            sample_server_ctx_t* d_ctx = (sample_server_ctx_t*)picoquic_get_default_callback_context(picoquic_get_quic_ctx(cnx));
+            if (d_ctx != NULL) {
+                memcpy(server_ctx, d_ctx, sizeof(sample_server_ctx_t));
+            }
+            else {
+                /* This really is an error case: the default connection context should never be NULL */
+                memset(server_ctx, 0, sizeof(sample_server_ctx_t));
+                server_ctx->default_dir = "";
+            }
+            picoquic_set_callback(cnx, sample_server_callback, server_ctx);
+        }
+    }
+
+    if (ret == 0) {
+        switch (fin_or_event) {
+        case picoquic_callback_stream_data:
+        case picoquic_callback_stream_fin:
+            /* Data arrival on stream #x, maybe with fin mark */
+            if (stream_ctx == NULL) {
+                /* Create and initialize stream context */
+                stream_ctx = sample_server_create_stream_context(server_ctx, stream_id);
+            }
+
+            if (stream_ctx == NULL) {
+                /* Internal error */
+                (void) picoquic_reset_stream(cnx, stream_id, PICOQUIC_SAMPLE_INTERNAL_ERROR);
+                return(-1);
+            }
+            else if (stream_ctx->is_name_read) {
+                /* Write after fin? */
+                return(-1);
+            }
+            else {
+                /* Accumulate data */
+                size_t available = sizeof(stream_ctx->file_name) - stream_ctx->name_length - 1;
+
+                if (length > available) {
+                    /* Name too long: reset stream! */
+                    sample_server_delete_stream_context(server_ctx, stream_ctx);
+                    (void) picoquic_reset_stream(cnx, stream_id, PICOQUIC_SAMPLE_NAME_TOO_LONG_ERROR);
+                }
+                else {
+                    if (length > 0) {
+                        memcpy(stream_ctx->file_name + stream_ctx->name_length, bytes, length);
+                        stream_ctx->name_length += length;
+                    }
+                    if (fin_or_event == picoquic_callback_stream_fin) {
+                        int stream_ret;
+
+                        /* If fin, mark read, check the file, open it. Or reset if there is no such file */
+                        stream_ctx->file_name[stream_ctx->name_length + 1] = 0;
+                        stream_ctx->is_name_read = 1;
+                        stream_ret = sample_server_open_stream(server_ctx, stream_ctx);
+
+                        if (stream_ret == 0) {
+                            /* If data needs to be sent, set the context as active */
+                            ret = picoquic_mark_active_stream(cnx, stream_id, 1, stream_ctx);
+                        }
+                        else {
+                            /* If the file could not be read, reset the stream */
+                            sample_server_delete_stream_context(server_ctx, stream_ctx);
+                            (void) picoquic_reset_stream(cnx, stream_id, stream_ret);
+                        }
+                    }
+                }
+            }
+            break;
+        case picoquic_callback_prepare_to_send:
+            /* Active sending API */
+            if (stream_ctx == NULL) {
+                /* This should never happen */
+            }
+            else if (stream_ctx->F == NULL) {
+                /* Error, asking for data after end of file */
+            }
+            else {
+                /* Implement the zero copy callback */
+                size_t available = stream_ctx->file_length - stream_ctx->file_sent;
+                int is_fin = 1;
+                uint8_t* buffer;
+
+                if (available > length) {
+                    available = length;
+                    is_fin = 0;
+                }
+                
+                buffer = picoquic_provide_stream_data_buffer(bytes, available, is_fin, !is_fin);
+                if (buffer != NULL) {
+                    size_t nb_read = fread(buffer, 1, available, stream_ctx->F);
+
+                    if (nb_read != available) {
+                        /* Error while reading the file */
+                        sample_server_delete_stream_context(server_ctx, stream_ctx);
+                        (void)picoquic_reset_stream(cnx, stream_id, PICOQUIC_SAMPLE_FILE_READ_ERROR);
+                    }
+                    else {
+                        stream_ctx->file_sent += available;
+                    }
+                }
+                else {
+                /* Should never happen according to callback spec. */
+                    ret = -1;
+                }
+            }
+            break;
+        case picoquic_callback_stream_reset: /* Client reset stream #x */
+        case picoquic_callback_stop_sending: /* Client asks server to reset stream #x */
+            if (stream_ctx != NULL) {
+                /* Mark stream as abandoned, close the file, etc. */
+                sample_server_delete_stream_context(server_ctx, stream_ctx);
+                picoquic_reset_stream(cnx, stream_id, PICOQUIC_SAMPLE_FILE_CANCEL_ERROR);
+            }
+            break;
+        case picoquic_callback_stateless_reset: /* Received an error message */
+        case picoquic_callback_close: /* Received connection close */
+        case picoquic_callback_application_close: /* Received application close */
+            /* Delete the server application context */
+            sample_server_delete_context(server_ctx);
+            picoquic_set_callback(cnx, NULL, NULL);
+            break;
+        case picoquic_callback_version_negotiation:
+            /* The server should never receive a version negotiation response */
+            break;
+        case picoquic_callback_stream_gap:
+            /* This callback is never used. */
+            break;
+        case picoquic_callback_almost_ready:
+        case picoquic_callback_ready:
+            /* Check that the transport parameters are what the sample expects */
+            break;
+        default:
+            /* unexpected */
+            break;
+        }
+    }
+
+    return ret;
+}
+
 
 /* Server loop setup:
  * - Create the QUIC context.
