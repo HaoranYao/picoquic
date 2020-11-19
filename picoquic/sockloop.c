@@ -260,15 +260,26 @@ int picoquic_packet_loop(picoquic_quic_t* quic,
             }
 
             while (ret == 0) {
+            
                 struct sockaddr_storage peer_addr;
                 struct sockaddr_storage local_addr;
                 int if_index = dest_if;
                 int sock_ret = 0;
                 int sock_err = 0;
 
+                // once the migration is done call quic = quic_back
+
                 ret = picoquic_prepare_next_packet(quic, loop_time,
                     send_buffer, sizeof(send_buffer), &send_length,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
+
+                /*
+                
+                ret = picoquic_prepare_next_packet(quic_back, loop_time,
+                    send_buffer, sizeof(send_buffer), &send_length,
+                    &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
+
+                */
 
                 if (ret == 0 && send_length > 0) {
                     SOCKET_TYPE send_socket = INVALID_SOCKET;

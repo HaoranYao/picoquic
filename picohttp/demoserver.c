@@ -702,6 +702,7 @@ int h3zero_server_callback(picoquic_cnx_t* cnx,
             ret = h3zero_server_callback_prepare_to_send(cnx, stream_id, stream_ctx, (void*)bytes, length, ctx);
             break;
         case picoquic_callback_almost_ready:
+        // start the migration here.
         case picoquic_callback_ready:
             /* Check that the transport parameters are what Http3 expects */
             break;
@@ -710,7 +711,6 @@ int h3zero_server_callback(picoquic_cnx_t* cnx,
             break;
         }
     }
-
     return ret;
 }
 

@@ -391,6 +391,8 @@ int picoquic_sample_server(int server_port, const char* server_cert, const char*
     /* Create QUIC context */
     quic = picoquic_create(8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
         sample_server_callback, &default_context, NULL, NULL, NULL, current_time, NULL, NULL, NULL, 0);
+    
+    // create a back server here
 
     if (quic == NULL) {
         fprintf(stderr, "Could not create server context\n");
@@ -411,6 +413,7 @@ int picoquic_sample_server(int server_port, const char* server_cert, const char*
     /* Wait for packets */
     if (ret == 0) {
         ret = picoquic_packet_loop(quic, server_port, 0, 0, NULL, NULL);
+        // if migration finished we should use picoquic_packet_loop(q_back......)
     }
 
     /* And finish. */

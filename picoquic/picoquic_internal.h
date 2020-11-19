@@ -1330,6 +1330,8 @@ typedef struct st_qicoquic_migraiton_data {
 
     FILE* f_binlog;
     char* binlog_file_name;
+
+    uint8_t data[];
 } picoquic_migration_data;
 
 int picoquic_save_connection_data_to_file(picoquic_migration_data * data, char * file_name);

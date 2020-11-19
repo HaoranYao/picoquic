@@ -3879,6 +3879,7 @@ int picoquic_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server) {
     create_picoquic_connnection_from_migration_data(migration_data, new_connection, new_server);
     // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", new_connection->initial_cnxid.id_len);
     // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", connection_to_migrate->initial_cnxid.id_len);
+    // TODO: check whether the 
     return ret;
 }
 
@@ -4016,6 +4017,7 @@ int picoquic_save_stream_node(picoquic_stream_head_t* stream_head) {
     while (temp->next_output_stream != NULL)
     {
         count++;
+
         temp = temp->next_output_stream;
         /* code */
     }
