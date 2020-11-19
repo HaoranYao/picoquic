@@ -95,7 +95,7 @@ typedef struct st_sample_server_migration_ctx_t {
     picoquic_quic_t* server_back;
     sample_server_stream_ctx_t* first_stream;
     sample_server_stream_ctx_t* last_stream;
-    int flag;
+    int migration_flag;
     int server_flag;
 } sample_server_migration_ctx_t;
 
@@ -470,7 +470,6 @@ int sample_server_callback(picoquic_cnx_t* cnx,
             /* This callback is never used. */
             break;
         case picoquic_callback_almost_ready:
-        printf("??????\n");
         break;
         case picoquic_callback_ready:
             /* Check that the transport parameters are what the sample expects */
@@ -656,6 +655,13 @@ int sample_server_migration_callback(picoquic_cnx_t* cnx,
             break;
         case picoquic_callback_almost_ready:
             printf("###EVENT case picoquic_callback_almost_ready\n");
+            // printf("server flag is %d\n", server_ctx->server_flag);
+            if (server_ctx->server_flag) {
+                server_ctx->migration_flag = 1;
+                /* code */
+            }
+            
+            printf("migration flag in callback is%d\n",server_ctx->migration_flag);
             break;
             // time to migrate
             
@@ -754,7 +760,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
 
     default_context.default_dir = default_dir;
     default_context.default_dir_len = strlen(default_dir);
-    default_context.flag = 0;
+    default_context.migration_flag = 0;
     default_context.server_flag = 0;
 
     printf("Starting Picoquic Sample server on port %d\n", server_port);
@@ -781,13 +787,12 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
 
         printf("Build server 2 OK\n");
     }
-
+    
     sample_server_migration_ctx_t default_migration_context = { 0 };
-
     default_migration_context.default_dir = default_dir;
     default_migration_context.default_dir_len = strlen(default_dir);
     default_migration_context.server_back = quic;
-    default_migration_context.flag = 0;
+    default_migration_context.migration_flag = 0;
     default_migration_context.server_flag = 1;
 
     /* Create the QUIC context for the server */
@@ -816,7 +821,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     /* Wait for packets */
     if (ret == 0) {
         // ret = picoquic_packet_loop(quic, server_port, 0, 0, NULL, NULL);
-        ret = picoquic_packet_loop_with_migration(quic, quic_back, &(default_migration_context.flag),server_port, 0, 0, NULL, NULL);
+        ret = picoquic_packet_loop_with_migration(quic, quic_back, &(default_migration_context.migration_flag),server_port, 0, 0, NULL, NULL);
         // if migration finished we should use picoquic_packet_loop(q_back......)
     }
 

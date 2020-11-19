@@ -531,10 +531,11 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
                 int sock_err = 0;
                 if (*migration_flag){
                     printf("migrated to the back-up server!!\n");
-                    *migration_flag = 0;
+                    // *migration_flag = 0;
                     picoquic_shallow_migrate(quic, quic_back);
                     quic = quic_back;
                 }
+                printf("migration flag in loop is%d\n",*migration_flag);
                 
                 // once the migration is done call quic = quic_back
                 ret = picoquic_prepare_next_packet(quic, loop_time,
