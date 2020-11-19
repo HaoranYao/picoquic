@@ -94,7 +94,8 @@ int main(int argc, char** argv)
         }
         else {
             int server_port = get_port(argv[0], argv[2]);
-            exit_code = picoquic_sample_server(server_port, argv[3], argv[4], argv[5]);
+            // exit_code = picoquic_sample_server(server_port, argv[3], argv[4], argv[5]);
+            exit_code = picoquic_sample_server_test_migration(server_port, argv[3], argv[4], argv[5]);
         }
     }
     else
