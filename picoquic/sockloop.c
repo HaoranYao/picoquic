@@ -532,7 +532,8 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
                 if (*migration_flag){
                     printf("migrated to the back-up server!!\n");
                     *migration_flag = 0;
-                    // quic = quic_back;
+                    picoquic_shallow_migrate(quic, quic_back);
+                    quic = quic_back;
                 }
                 
                 // once the migration is done call quic = quic_back
