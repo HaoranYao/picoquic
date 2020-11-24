@@ -20,6 +20,11 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
+#include "picoquic_utils.h"
+#include "picotls.h"
+#include <string.h>
+
 #include "picoquic.h"
 #include "picoquic_internal.h"
 #include "picoquic_unified_log.h"
@@ -282,6 +287,58 @@ int picoquic_registered_token_check_reuse(picoquic_quic_t * quic,
                 ret = 0;
             }
         }
+    }
+
+    return ret;
+}
+
+int check_en_pe(picoquic_cnx_t* new_connection, picoquic_cnx_t* connection_to_migrate) {
+    int ret = 0;
+    if (ret == 0) {
+        printf("en de test\n");
+        uint8_t seq_num_1[4] = { 0xde, 0xad, 0xbe, 0xef };
+        uint8_t sample_1[16] = {
+            0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,
+            0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a };
+        uint8_t seq_num_2[4] = { 0xba, 0xba, 0xc0, 0x0l };
+        uint8_t sample_2[16] = {
+            0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
+            0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96};
+
+        ret = test_one_pn_enc_pair1(seq_num_1, 4, 
+            new_connection->crypto_context[3].pn_enc, connection_to_migrate->crypto_context[3].pn_enc, sample_1);
+
+        if (ret != 0) {
+            printf("Test of encoding PN sample 1 failed.\n");
+        } else {
+            ret = test_one_pn_enc_pair1(seq_num_2, 4, connection_to_migrate->crypto_context[3].pn_dec, 
+                connection_to_migrate->crypto_context[3].pn_dec, sample_2);
+            if (ret != 0) {
+                printf("Test of encoding PN sample 2 failed.\n");
+            }
+        }
+        if (ret == 0) {
+            printf("test ok!\n");
+        }
+    }
+    return ret;
+}
+
+int test_one_pn_enc_pair1(uint8_t * seqnum, size_t seqnum_len, void * pn_enc, void * pn_dec, uint8_t * sample)
+{
+    int ret = 0;
+    uint8_t encoded[32];
+    uint8_t decoded[32];
+
+    ptls_cipher_init((ptls_cipher_context_t *)pn_enc, sample);
+    ptls_cipher_encrypt((ptls_cipher_context_t *)pn_enc, encoded, seqnum, seqnum_len);
+
+    ptls_cipher_init((ptls_cipher_context_t *)pn_dec, sample);
+    ptls_cipher_encrypt((ptls_cipher_context_t *)pn_dec, decoded, encoded, seqnum_len);
+
+    if (memcmp(seqnum, decoded, seqnum_len) != 0)
+    {
+        ret = -1;
     }
 
     return ret;
@@ -3879,7 +3936,8 @@ int picoquic_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server) {
     create_picoquic_connnection_from_migration_data(migration_data, new_connection, new_server);
     // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", new_connection->initial_cnxid.id_len);
     // printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ connection id len is %d\n", connection_to_migrate->initial_cnxid.id_len);
-    // TODO: check whether the 
+    // TODO: check whether the secret is correct
+    check_en_pe(new_connection, connection_to_migrate);
     return ret;
 }
 
@@ -3954,8 +4012,9 @@ int picoquic_save_connection_data(picoquic_cnx_t* cnx) {
     trans_data->retry_token_length = cnx->retry_token_length;
     // trans_data->retry_token = picoquic_string_duplicate(cnx->sni);
     trans_data->next_wake_time = cnx->next_wake_time;
-    memcpy(trans_data->client_secret, cnx->client_secret, sizeof(u_int8_t) * 256);
-    memcpy(trans_data->server_secret, cnx->server_secret, sizeof(u_int8_t) * 256);
+    memcpy(trans_data->secrets_en, cnx->secrets_en, sizeof(u_int8_t) * 256 * 4);
+    // memcpy(trans_data->, cnx->server_secret, sizeof(u_int8_t) * 256);
+    memcpy(trans_data->secrets_de, cnx->secrets_de, sizeof(u_int8_t) * 256 * 4);
     picoquic_save_stream_node(cnx->first_output_stream);
     memcpy(&trans_data->peer_addr, &cnx->path[0]->peer_addr, sizeof(trans_data->peer_addr));
     picoquic_save_connection_data_to_file(trans_data, "connection_data");
@@ -4081,8 +4140,10 @@ int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx
     new_connection->offending_frame_type = cnx->offending_frame_type;
     new_connection->retry_token_length = cnx->retry_token_length;
     new_connection->next_wake_time = cnx->next_wake_time;
-    memcpy(new_connection->client_secret, cnx->client_secret, sizeof(u_int8_t) * 256);
-    memcpy(new_connection->server_secret, cnx->server_secret, sizeof(u_int8_t) * 256);
+    // memcpy(new_connection->client_secret, cnx->client_secret, sizeof(u_int8_t) * 256);
+    // memcpy(new_connection->server_secret, cnx->server_secret, sizeof(u_int8_t) * 256);
+    memcpy(new_connection->secrets_en, cnx->secrets_en, sizeof(u_int8_t) * 256 * 4);
+    memcpy(new_connection->secrets_de, cnx->secrets_de, sizeof(u_int8_t) * 256 * 4);
     // links to the new server
     // quic parameter!
     new_connection->quic = new_server;

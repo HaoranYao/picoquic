@@ -1,0 +1,73 @@
+{ "qlog_version": "draft-00", "title": "picoquic", "traces": [
+{ "vantage_point": { "name": "backend-67", "type": "client" },
+"title": "picoquic", "description": "68cfa2dd80534c4a","event_fields": ["relative_time", "CATEGORY", "EVENT_TYPE", "DATA"],
+"configuration": {"time_units": "us"},
+"common_fields": { "protocol_type": "QUIC_HTTP3", "reference_time": "1606188970229138"},
+"events": [
+[1284, "transport", "parameters_set", {
+    "owner": "local",
+    "sni": "test.example.com",
+    "proposed_alpn": ["picoquic_sample"]}],
+[1285, "transport", "parameters_set", {
+    "owner": "local",
+    "initial_max_stream_data_bidi_local" : 2097152,
+    "initial_max_data" : 1048576,
+    "initial_max_streams_bidi" : 513,
+    "idle_timeout" : 30000,
+    "max_packet_size" : 1440,
+    "initial_max_streams_uni" : 513,
+    "initial_max_stream_data_bidi_remote" : 65635,
+    "initial_max_stream_data_uni" : 65535,
+    "active_connection_id_limit" : 8,
+    "max_ack_delay" : 10,
+    "handshake_connection_id": "c4b2c331940c6c49",
+    "enable_loss_bit" : 1,
+    "min_ack_delay" : 1000}],
+[1452, "transport", "packet_sent", { "packet_type": "initial", "header": { "packet_size": 542, "packet_number": 0, "version": "ff000020", "payload_length": 462, "scid": "c4b2c331940c6c49", "dcid": "68cfa2dd80534c4a", "token": "88bc73a4d1b47fc04dc83dfd5941bc09614a38a86c84b295bc2a4a2d5f7b4a7d930faecc0ff622bc33ff78acac16dcfd5c24" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 458}]}],
+[1452, "transport", "packet_sent", { "packet_type": "0RTT", "header": { "packet_size": 678, "packet_number": 0, "payload_length": 649, "scid": "c4b2c331940c6c49", "dcid": "68cfa2dd80534c4a" }, "frames": [{ 
+    "frame_type": "stream", "id": 0, "offset": 0, "length": 1, "fin": true , "begins_with": "31"}, { 
+    "frame_type": "padding"}]}],
+[1452, "transport", "datagram_sent", { "byte_length": 1252, "addr_to" : {"ip_v4": "127.0.0.1", "port_v4":8888}, "addr_from" : { "ip_v6": "0:0:0:0:0:0:0:0", "port_v6" :0}}],
+[8088, "transport", "datagram_received", { "byte_length": 879, "addr_to" : {"ip_v4": "127.0.0.1", "port_v4":60475}}],
+[8088, "transport", "packet_received", { "packet_type": "initial", "header": { "packet_size": 187, "packet_number": 0, "payload_length": 141, "scid": "d846e6f17e21f490", "dcid": "c4b2c331940c6c49" }, "frames": [{ 
+    "frame_type": "ack", "ack_delay": 0, "acked_ranges": [[0, 0]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "crypto", "offset": 0, "length": 129}]}],
+[8110, "info", "message", { "message": "Received unpadded initial, length=879"}],
+[8088, "transport", "packet_received", { "packet_type": "handshake", "header": { "packet_size": 222, "packet_number": 0, "payload_length": 177, "scid": "d846e6f17e21f490", "dcid": "c4b2c331940c6c49" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 173}]}],
+[8257, "transport", "parameters_set", {
+    "owner": "remote",
+    "initial_max_stream_data_bidi_local" : 2097152,
+    "initial_max_data" : 1048576,
+    "initial_max_streams_bidi" : 513,
+    "idle_timeout" : 30000,
+    "max_packet_size" : 1440,
+    "initial_max_streams_uni" : 513,
+    "initial_max_stream_data_bidi_remote" : 65635,
+    "initial_max_stream_data_uni" : 65535,
+    "active_connection_id_limit" : 8,
+    "max_ack_delay" : 10,
+    "handshake_connection_id": "d846e6f17e21f490",
+    "original_connection_id": "68cfa2dd80534c4a",
+    "stateless_reset_token": "3f265a2491e28a58e83ebe346cb9065f",
+    "enable_loss_bit" : 1,
+    "min_ack_delay" : 1000}],
+[8088, "transport", "packet_received", { "packet_type": "1RTT", "header": { "packet_size": 470, "packet_number": 0, "dcid": "c4b2c331940c6c49", "key_phase": 0 }, "frames": [{ 
+    "frame_type": "ack", "ack_delay": 0, "acked_ranges": [[0, 0]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "e5991dc14c7712aa5aa3fd475898b5105cdabf690e868dbbe53487027a6025f5c4b4c7d79af16f1260ca466bd8f3210160d0"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "aadf3ddfaf0caebd", "reset_token": "eb0e8b9995a9ae98d1153c771828e25f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "1ddbf5c1a40f2099", "reset_token": "dd480957f7e80725583af2a65a207aa1"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "c2ef346747456485", "reset_token": "daec2f2260768054cb5402ca2e39f8dd"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "0e9807375033bd59", "reset_token": "9a9a18ee0f4490627cee04265b941642"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "033c6104c6e5fbea", "reset_token": "2938cee7ba987a13927ad0ef15cb7078"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "bac9a8f637ef60d1", "reset_token": "3e1b198fa4fc3b8d4e936932e39d001d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "97a6190857a09669", "reset_token": "466524edab7e6a4c5102814ee7117f3f"}, { 
+    "frame_type": "stream", "id": 0, "offset": 0, "length": 38, "fin": true , "begins_with": "776a646f6977646f"}]}],
+[8088, "recovery", "metrics_updated", {"cwnd": 16580,"pacing_rate": 10678038,"smoothed_rtt": 6636,"min_rtt": 6636,"latest_rtt": 6636}],
+[8088, "transport", "packet_sent", { "packet_type": "handshake", "header": { "packet_size": 41, "packet_number": 0, "payload_length": 12, "scid": "c4b2c331940c6c49", "dcid": "d846e6f17e21f490" }, "frames": [{ 
+    "frame_type": "ack", "ack_delay": 0, "acked_ranges": [[0, 0]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "connection_close", "error_space": "transport", "error_code": 12, "trigger_frame_type": "padding"}]}],
+[8088, "transport", "datagram_sent", { "byte_length": 57}],
+[8515, "info", "message", { "message": "Closed. Retrans= 0, spurious= 0, max sp gap = 0, max sp delay = 0, dg-coal: 1.000000"}]]}]}

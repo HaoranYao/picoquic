@@ -305,6 +305,12 @@ stdint.h
 -
 
 /home/haoran/quic_bak/picoquic/picoquic/quicctx.c
+picoquic_utils.h
+/home/haoran/quic_bak/picoquic/picoquic/picoquic_utils.h
+picotls.h
+/home/haoran/quic_bak/picoquic/picoquic/picotls.h
+string.h
+-
 picoquic.h
 /home/haoran/quic_bak/picoquic/picoquic/picoquic.h
 picoquic_internal.h

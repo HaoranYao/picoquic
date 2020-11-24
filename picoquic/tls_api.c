@@ -1392,6 +1392,14 @@ static int picoquic_update_traffic_key_callback(ptls_update_traffic_key_t * self
     ptls_context_t* ctx = (ptls_context_t*)cnx->quic->tls_master_ctx;
     ptls_cipher_suite_t * cipher = ptls_get_cipher(tls);
     UNREFERENCED_PARAMETER(self);
+    // printf("THE epoch is %ld\n", epoch);
+    if (is_enc) {
+        memcpy(cnx->secrets_en[epoch], secret, sizeof(u_int8_t) * 256);
+    } else {
+        memcpy(cnx->secrets_de[epoch], secret, sizeof(u_int8_t) * 256);
+    }
+    
+    
 
     int ret = picoquic_set_key_from_secret(cipher, is_enc, 0, &cnx->crypto_context[epoch], secret);
     if (cnx->cnx_state < picoquic_state_ready) {
@@ -1497,12 +1505,13 @@ int picoquic_setup_initial_traffic_keys(picoquic_cnx_t* cnx)
     }
 
     //copyt the secret to the connection
-    memcpy(cnx->client_secret, client_secret, sizeof(u_int8_t) * 256);
-    memcpy(cnx->server_secret, server_secret, sizeof(u_int8_t) * 256);
+    // memcpy(cnx->client_secret, client_secret, sizeof(u_int8_t) * 256);
+    // memcpy(cnx->server_secret, server_secret, sizeof(u_int8_t) * 256);
 
     /* derive the initial keys */
     if (ret == 0) {
         if (!cnx->client_mode) {
+            //cnx is from a server
             secret1 = server_secret;
             secret2 = client_secret;
         }
@@ -1512,9 +1521,11 @@ int picoquic_setup_initial_traffic_keys(picoquic_cnx_t* cnx)
         }
         
         ret = picoquic_set_key_from_secret(cipher, 1, 0, &cnx->crypto_context[0], secret1);
-
+        memcpy(cnx->secrets_en[0], secret1, sizeof(u_int8_t) * 256);
+        
         if (ret == 0) {
             ret = picoquic_set_key_from_secret(cipher, 0, 0, &cnx->crypto_context[0], secret2);
+            memcpy(cnx->secrets_de[0], secret2, sizeof(u_int8_t) * 256);
         }
     }
 
@@ -1527,23 +1538,28 @@ int picoquic_setup_initial_traffic_keys_with_secret(picoquic_cnx_t* cnx)
 {
     int ret = 0;
     ptls_cipher_suite_t * cipher = picoquic_get_aes128gcm_sha256();
-    uint8_t *secret1, *secret2;
+
+    uint8_t (*secret1)[256]; /*store the secret for migration*/
+    uint8_t (*secret2)[256]; /*store the secret for migration*/
+
 
     /* derive the initial keys */
     if (ret == 0) {
         if (!cnx->client_mode) {
-            secret1 = cnx->server_secret;
-            secret2 = cnx->client_secret;
+            secret1 = cnx->secrets_en;
+            secret2 = cnx->secrets_de;
         }
         else {
-            secret1 = cnx->client_secret;
-            secret2 = cnx->server_secret;
+            secret1 = cnx->secrets_de;
+            secret2 = cnx->secrets_en;
         }
         
-        ret = picoquic_set_key_from_secret(cipher, 1, 0, &cnx->crypto_context[0], secret1);
+        for (int i = 0; i < PICOQUIC_NUMBER_OF_EPOCHS; i++) {
+            ret = picoquic_set_key_from_secret(cipher, 1, 0, &cnx->crypto_context[i], secret1[i]);
+        }
 
-        if (ret == 0) {
-            ret = picoquic_set_key_from_secret(cipher, 0, 0, &cnx->crypto_context[0], secret2);
+        for (int i = 0; i < PICOQUIC_NUMBER_OF_EPOCHS; i++) {
+            ret = picoquic_set_key_from_secret(cipher, 0, 0, &cnx->crypto_context[i], secret2[i]);
         }
     }
     return ret;

@@ -1011,8 +1011,9 @@ typedef struct st_picoquic_cnx_t {
     struct st_ptls_buffer_t* tls_sendbuf;
     uint16_t psk_cipher_suite_id;
 
-    uint8_t client_secret[256]; /*store the secret for migration*/
-    uint8_t server_secret[256];
+    uint8_t secrets_en[PICOQUIC_NUMBER_OF_EPOCHS][256]; /*store the secret for migration*/
+    uint8_t secrets_de[PICOQUIC_NUMBER_OF_EPOCHS][256]; /*store the secret for migration*/
+    // uint8_t server_secret[PICOQUIC_NUMBER_OF_EPOCHS][256];
     
     picoquic_stream_head_t tls_stream[PICOQUIC_NUMBER_OF_EPOCHS]; /* Separate input/output from each epoch */
     picoquic_crypto_context_t crypto_context[PICOQUIC_NUMBER_OF_EPOCHS]; /* Encryption and decryption objects */
@@ -1218,9 +1219,8 @@ typedef struct st_qicoquic_migraiton_data {
     struct st_ptls_buffer_t* tls_sendbuf;
     uint16_t psk_cipher_suite_id;
 
-
-    uint8_t client_secret[256];
-    uint8_t server_secret[256];
+    uint8_t secrets_en[PICOQUIC_NUMBER_OF_EPOCHS][256]; /*store the secret for migration*/
+    uint8_t secrets_de[PICOQUIC_NUMBER_OF_EPOCHS][256]; /*store the secret for migration*/
 
     picoquic_stream_head_t tls_stream[PICOQUIC_NUMBER_OF_EPOCHS]; /* Separate input/output from each epoch */
     picoquic_crypto_context_t crypto_context[PICOQUIC_NUMBER_OF_EPOCHS]; /* Encryption and decryption objects */
@@ -1341,6 +1341,7 @@ int picoquic_save_stream_node(picoquic_stream_head_t* stream_head);
 int picoquic_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server);
 int picoquic_shallow_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server);
 int picoquic_save_connection_data(picoquic_cnx_t* cnx);
+int test_one_pn_enc_pair1(uint8_t * seqnum, size_t seqnum_len, void * pn_enc, void * pn_dec, uint8_t * sample);
 
 typedef struct st_picoquic_packet_data_t {
     picoquic_path_t* acked_path; /* path for which ACK was received */

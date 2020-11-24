@@ -113,6 +113,8 @@ CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/picoquic_utils.h
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/picosplay.h
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/quicctx.c
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/tls_api.h
+CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: /home/haoran/quic_bak/picotls/include/picotls.h
+CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/wincompat.h
 
 CMakeFiles/picoquic-core.dir/picoquic/sacks.c.o: picoquic/picohash.h
 CMakeFiles/picoquic-core.dir/picoquic/sacks.c.o: picoquic/picoquic.h

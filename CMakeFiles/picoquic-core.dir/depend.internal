@@ -114,6 +114,8 @@ CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o
  /home/haoran/quic_bak/picoquic/picoquic/picosplay.h
  /home/haoran/quic_bak/picoquic/picoquic/quicctx.c
  /home/haoran/quic_bak/picoquic/picoquic/tls_api.h
+ /home/haoran/quic_bak/picotls/include/picotls.h
+ picoquic/wincompat.h
 CMakeFiles/picoquic-core.dir/picoquic/sacks.c.o
  /home/haoran/quic_bak/picoquic/picoquic/picohash.h
  /home/haoran/quic_bak/picoquic/picoquic/picoquic.h
