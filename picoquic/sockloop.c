@@ -529,13 +529,15 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
                 int if_index = dest_if;
                 int sock_ret = 0;
                 int sock_err = 0;
-                if (*migration_flag){
-                    printf("migrated to the back-up server!!\n");
+                if ((quic->cnx_last) != NULL && quic->cnx_last->callback_ctx!=NULL) {
+                    if (((sample_server_migration_ctx_t *) (quic->cnx_last->callback_ctx))->migration_flag){
+                        printf("migrated to the back-up server!!\n");
                     // *migration_flag = 0;
                     // picoquic_shallow_migrate(quic, quic_back);
                     // quic = quic_back;
                 }
-                printf("migration flag in loop is%d\n",*migration_flag);
+                }
+                // printf("migration flag in loop is%d\n",*migration_flag);
                 
                 // once the migration is done call quic = quic_back
                 ret = picoquic_prepare_next_packet(quic, loop_time,

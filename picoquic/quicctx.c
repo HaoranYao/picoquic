@@ -24,7 +24,6 @@
 #include "picoquic_utils.h"
 #include "picotls.h"
 #include <string.h>
-
 #include "picoquic.h"
 #include "picoquic_internal.h"
 #include "picoquic_unified_log.h"

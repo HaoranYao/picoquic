@@ -17,8 +17,11 @@ CMakeFiles/picoquic_sample.dir/sample/sample_client.c.o: picoquic/picosocks.h
 CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: sample/picoquic_sample.h
 CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: sample/sample_server.c
 CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: loglib/autoqlog.h
+CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: picoquic/picohash.h
 CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: picoquic/picoquic.h
+CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: picoquic/picoquic_internal.h
 CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: picoquic/picoquic_packet_loop.h
 CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: picoquic/picoquic_utils.h
 CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: picoquic/picosocks.h
+CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o: picoquic/picosplay.h
 

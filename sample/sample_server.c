@@ -38,7 +38,7 @@
  * completes, the code saves the log as a file named after the Initial Connection
  * ID (in hexa), with the suffix ".server.qlog".
  */
-
+#include "picoquic_internal.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <picoquic.h>
@@ -67,38 +67,6 @@
  * The server side callback is a large switch statement, with one entry
  * for each of the call back events.
  */
-
-typedef struct st_sample_server_stream_ctx_t {
-    struct st_sample_server_stream_ctx_t* next_stream;
-    struct st_sample_server_stream_ctx_t* previous_stream;
-    uint64_t stream_id;
-    FILE* F;
-    uint8_t file_name[256];
-    size_t name_length;
-    size_t file_length;
-    size_t file_sent;
-    unsigned int is_name_read : 1;
-    unsigned int is_stream_reset : 1;
-    unsigned int is_stream_finished : 1;
-} sample_server_stream_ctx_t;
-
-typedef struct st_sample_server_ctx_t {
-    char const* default_dir;
-    size_t default_dir_len;
-    sample_server_stream_ctx_t* first_stream;
-    sample_server_stream_ctx_t* last_stream;
-} sample_server_ctx_t;
-
-typedef struct st_sample_server_migration_ctx_t {
-    char const* default_dir;
-    size_t default_dir_len;
-    picoquic_quic_t* server_back;
-    sample_server_stream_ctx_t* first_stream;
-    sample_server_stream_ctx_t* last_stream;
-    int migration_flag;
-    int server_flag;
-} sample_server_migration_ctx_t;
-
 sample_server_stream_ctx_t * sample_server_create_stream_context(sample_server_ctx_t* server_ctx, uint64_t stream_id)
 {
     sample_server_stream_ctx_t* stream_ctx = (sample_server_stream_ctx_t*)malloc(sizeof(sample_server_stream_ctx_t));
@@ -667,11 +635,11 @@ int sample_server_migration_callback(picoquic_cnx_t* cnx,
             
         case picoquic_callback_ready:
             printf("###EVENT case picoquic_callback_ready\n");
-            if (server_ctx->server_flag) {
-                server_ctx->migration_flag = 1;
-                /* code */
-            }
-            printf("migration flag in callback is %d\n",server_ctx->migration_flag);
+            // if (server_ctx->server_flag) {
+            //     server_ctx->migration_flag = 1;
+            //     /* code */
+            // }
+            // printf("migration flag in callback is %d\n",server_ctx->migration_flag);
             // server_ctx_migration->flag = 1;
             // server_ctx_migration->flag = 1;
             /* Check that the transport parameters are what the sample expects */
@@ -789,7 +757,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         picoquic_set_log_level(quic_back, 1);
 
         picoquic_set_key_log_file_from_env(quic_back);
-
+        
         printf("Build server 2 OK\n");
     }
     

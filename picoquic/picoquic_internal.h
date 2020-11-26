@@ -916,6 +916,7 @@ typedef struct st_picoquic_cnx_t {
 
     /* Management of context retrieval tables */
 
+    // change it?
     struct st_picoquic_cnx_t* next_in_table;
     struct st_picoquic_cnx_t* previous_in_table;
 
@@ -1333,6 +1334,38 @@ typedef struct st_qicoquic_migraiton_data {
 
     uint8_t data[];
 } picoquic_migration_data;
+
+typedef struct st_sample_server_stream_ctx_t {
+    struct st_sample_server_stream_ctx_t* next_stream;
+    struct st_sample_server_stream_ctx_t* previous_stream;
+    uint64_t stream_id;
+    FILE* F;
+    uint8_t file_name[256];
+    size_t name_length;
+    size_t file_length;
+    size_t file_sent;
+    unsigned int is_name_read : 1;
+    unsigned int is_stream_reset : 1;
+    unsigned int is_stream_finished : 1;
+} sample_server_stream_ctx_t;
+
+typedef struct st_sample_server_ctx_t {
+    char const* default_dir;
+    size_t default_dir_len;
+    sample_server_stream_ctx_t* first_stream;
+    sample_server_stream_ctx_t* last_stream;
+} sample_server_ctx_t;
+
+typedef struct st_sample_server_migration_ctx_t {
+    char const* default_dir;
+    size_t default_dir_len;
+    picoquic_quic_t* server_back;
+    sample_server_stream_ctx_t* first_stream;
+    sample_server_stream_ctx_t* last_stream;
+    int migration_flag;
+    int server_flag;
+} sample_server_migration_ctx_t;
+
 
 int picoquic_save_connection_data_to_file(picoquic_migration_data * data, char * file_name);
 int picoquic_load_connection_data_from_file(picoquic_migration_data * data, char * file_name);
