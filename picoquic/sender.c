@@ -3680,6 +3680,7 @@ int picoquic_prepare_packet_ex(picoquic_cnx_t* cnx,
 
         while (ret == 0)
         {
+            // printf("create a new packet!\n");
             /* Create a new packet */
             int is_initial_sent = 0;
             size_t packet_size = 0;
@@ -3841,6 +3842,7 @@ int picoquic_prepare_next_packet_ex(picoquic_quic_t* quic,
     struct sockaddr_storage* p_addr_to, struct sockaddr_storage* p_addr_from, int * if_index,
     picoquic_connection_id_t * log_cid, picoquic_cnx_t** p_last_cnx, size_t * send_msg_size)
 {
+    // printf("prepare next packet\n");
     int ret = 0;
     picoquic_stateless_packet_t* sp = picoquic_dequeue_stateless_packet(quic);
 
@@ -3865,9 +3867,11 @@ int picoquic_prepare_next_packet_ex(picoquic_quic_t* quic,
         picoquic_delete_stateless_packet(sp);
     }
     else {
+        // printf("try to get packet\n");
         picoquic_cnx_t* cnx = picoquic_get_earliest_cnx_to_wake(quic, current_time);
 
         if (cnx == NULL) {
+            printf("can not get connection\n");
             *send_length = 0;
         }
         else {

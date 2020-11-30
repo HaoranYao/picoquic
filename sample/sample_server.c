@@ -624,21 +624,21 @@ int sample_server_migration_callback(picoquic_cnx_t* cnx,
         case picoquic_callback_almost_ready:
             printf("###EVENT case picoquic_callback_almost_ready\n");
             // printf("server flag is %d\n", server_ctx->server_flag);
-            if (server_ctx->server_flag) {
-                server_ctx->migration_flag = 1;
-                /* code */
-            }
-            
-            printf("migration flag in callback is%d\n",server_ctx->migration_flag);
+            // if (server_ctx->server_flag) {
+            //     server_ctx->migration_flag = 1;
+            //     /* code */
+            // }
+            printf("server number is %d\n", server_ctx->server_flag);
+            // printf("migration flag in callback is%d\n",server_ctx->migration_flag);
             break;
             // time to migrate
             
         case picoquic_callback_ready:
             printf("###EVENT case picoquic_callback_ready\n");
-            // if (server_ctx->server_flag) {
-            //     server_ctx->migration_flag = 1;
-            //     /* code */
-            // }
+            if (server_ctx->server_flag) {
+                server_ctx->migration_flag = 1;
+                /* code */
+            }
             // printf("migration flag in callback is %d\n",server_ctx->migration_flag);
             // server_ctx_migration->flag = 1;
             // server_ctx_migration->flag = 1;
