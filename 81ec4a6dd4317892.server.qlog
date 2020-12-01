@@ -1,0 +1,441 @@
+{ "qlog_version": "draft-00", "title": "picoquic", "traces": [
+{ "vantage_point": { "name": "backend-67", "type": "server" },
+"title": "picoquic", "description": "81ec4a6dd4317892","event_fields": ["relative_time", "CATEGORY", "EVENT_TYPE", "DATA"],
+"configuration": {"time_units": "us"},
+"common_fields": { "protocol_type": "QUIC_HTTP3", "reference_time": "1606730866644224"},
+"events": [
+[0, "transport", "datagram_received", { "byte_length": 1252, "addr_from" : {"ip_v4": "127.0.0.1", "port_v4":48311}, "addr_to" : {"ip_v4": "127.0.0.1", "port_v4":47138}}],
+[0, "transport", "packet_received", { "packet_type": "initial", "header": { "packet_size": 558, "packet_number": 0, "version": "ff000020", "payload_length": 462, "scid": "eabb0e7cb0b8bcf7", "dcid": "81ec4a6dd4317892", "token": "ac36a4e4939f477c064e7753c2749a30cb205423275ed5bee1511cc4818c04bf6bf763d18ed9aba5cb6d69d0844521b8f16f" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 458}]}],
+[430, "info", "message", { "message": "ALPN[0] matches default alpn (picoquic_sample)"}],
+[432, "transport", "parameters_set", {
+    "owner": "remote",
+    "sni": "test.example.com",
+    "proposed_alpn": ["picoquic_sample"],
+    "alpn": "picoquic_sample"}],
+[434, "transport", "parameters_set", {
+    "owner": "remote",
+    "initial_max_stream_data_bidi_local" : 2097152,
+    "initial_max_data" : 1048576,
+    "initial_max_streams_bidi" : 513,
+    "idle_timeout" : 30000,
+    "max_packet_size" : 1440,
+    "initial_max_streams_uni" : 513,
+    "initial_max_stream_data_bidi_remote" : 65635,
+    "initial_max_stream_data_uni" : 65535,
+    "active_connection_id_limit" : 8,
+    "max_ack_delay" : 10,
+    "handshake_connection_id": "eabb0e7cb0b8bcf7",
+    "enable_loss_bit" : 1,
+    "min_ack_delay" : 1000}],
+[438, "transport", "parameters_set", {
+    "owner": "local",
+    "initial_max_stream_data_bidi_local" : 2097152,
+    "initial_max_data" : 1048576,
+    "initial_max_streams_bidi" : 513,
+    "idle_timeout" : 30000,
+    "max_packet_size" : 1440,
+    "initial_max_streams_uni" : 513,
+    "initial_max_stream_data_bidi_remote" : 65635,
+    "initial_max_stream_data_uni" : 65535,
+    "active_connection_id_limit" : 8,
+    "max_ack_delay" : 10,
+    "handshake_connection_id": "94ddcee7f6980fa2",
+    "original_connection_id": "81ec4a6dd4317892",
+    "stateless_reset_token": "e8f0b8a86008d74ead79068316267785",
+    "enable_loss_bit" : 1,
+    "min_ack_delay" : 1000}],
+[0, "transport", "packet_dropped", {
+    "packet_type" : "0RTT",
+    "packet_size" : 694,
+    "trigger": "key_unavailable",
+    "raw": "dcff0000200881ec4a6dd431789208eabb0e7cb0b8bcf7429d4f6f7c56eca0c4"}],
+[0, "transport", "packet_sent", { "packet_type": "initial", "header": { "packet_size": 165, "packet_number": 0, "payload_length": 135, "scid": "94ddcee7f6980fa2", "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "ack", "ack_delay": 0, "acked_ranges": [[0, 0]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "crypto", "offset": 0, "length": 123}]}],
+[0, "transport", "packet_sent", { "packet_type": "handshake", "header": { "packet_size": 1055, "packet_number": 0, "payload_length": 1026, "scid": "94ddcee7f6980fa2", "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 1022}]}],
+[0, "transport", "datagram_sent", { "byte_length": 1252}],
+[0, "transport", "packet_sent", { "packet_type": "handshake", "header": { "packet_size": 273, "packet_number": 1, "payload_length": 244, "scid": "94ddcee7f6980fa2", "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 1022, "length": 239}]}],
+[0, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 405, "packet_number": 0, "dcid": "eabb0e7cb0b8bcf7", "key_phase": 0 }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "b74a2b3715daf4bef42fe0283cf9010a5195d98864ab12a1b020c6f78bf452aaf8db0223b5c11216769c7c23dd3e769043fa"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "e2412aaf3daad085", "reset_token": "92fc1696deb229523b8a89121794b01e"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "4b6021975384db32", "reset_token": "de36a44f2cb57d2aac3eab19424bcced"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "fd73e6f15b477d0c", "reset_token": "82780e33989f8c21557276ca865eb65f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "9e3e4edb30a121ab", "reset_token": "f1163fa955b9423849f764cb22ccc260"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "eb1825cf608f7d31", "reset_token": "a949dbda8ad834927d338ea7515c2d35"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "f20c7158fe3193ed", "reset_token": "bfdad880c1eeca0fca414154874ff03d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "d9be7b87a22a7107", "reset_token": "597f1b515dc0e22f0fd3cb27500120fa"}]}],
+[0, "recovery", "metrics_updated", {"cwnd": 15360,"bytes_in_flight": 1962}],
+[0, "transport", "datagram_sent", { "byte_length": 710}],
+[0, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 1424, "packet_number": 1, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "ping"}, { 
+    "frame_type": "padding"}]}],
+[0, "recovery", "metrics_updated", {"bytes_in_flight": 3402}],
+[0, "transport", "datagram_sent", { "byte_length": 1440}],
+[2570, "transport", "datagram_received", { "byte_length": 53}],
+[2570, "transport", "packet_received", { "packet_type": "handshake", "header": { "packet_size": 53, "packet_number": 0, "payload_length": 8, "scid": "eabb0e7cb0b8bcf7", "dcid": "94ddcee7f6980fa2" }, "frames": [{ 
+    "frame_type": "ack", "ack_delay": 0, "acked_ranges": [[0, 0]], "ect0": 1, "ect1": 0, "ce": 0}]}],
+[2570, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 2, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "ack_frequency", "sequence_number": 0, "packet_tolerance": 2, "max_ack_delay": 1000 }, { 
+    "frame_type": "padding"}]}],
+[2570, "recovery", "metrics_updated", {"cwnd": 16415,"bytes_in_flight": 2205,"smoothed_rtt": 2570,"min_rtt": 2570,"latest_rtt": 2570}],
+[2570, "transport", "datagram_sent", { "byte_length": 55}],
+[2741, "transport", "datagram_received", { "byte_length": 314}],
+[2741, "transport", "packet_received", { "packet_type": "handshake", "header": { "packet_size": 92, "packet_number": 1, "payload_length": 47, "scid": "eabb0e7cb0b8bcf7", "dcid": "94ddcee7f6980fa2" }, "frames": [{ 
+    "frame_type": "ack", "ack_delay": 0, "acked_ranges": [[0, 1]], "ect0": 2, "ect1": 0, "ce": 0}, { 
+    "frame_type": "crypto", "offset": 0, "length": 36}]}],
+[2741, "transport", "packet_received", { "packet_type": "1RTT", "header": { "packet_size": 222, "packet_number": 1, "dcid": "94ddcee7f6980fa2", "key_phase": 0 }, "frames": [{ 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "11cfdf8d490602e6", "reset_token": "d8bb30ef3ae1bfdee750996e727e9d2c"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "a80e9cbd9904a58e", "reset_token": "bbd4ff7a3719bd3da3375625909a07f7"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "e57d85eec9cfdba2", "reset_token": "088e5779a1aab85448f01c721aeb7a85"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "52011085706cdda6", "reset_token": "75909c7ca4d3536fb3e0c36af0a75fca"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "f223cca080a0c2d5", "reset_token": "6c09f1f5abfe3388b5a7cca442eab451"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "81c82f2ac2e38b9a", "reset_token": "05cadce54c4f95a4d448008e16efc550"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "12bfebf879857bf0", "reset_token": "1383f0d0b293139a23a967302b185ef9"}]}],
+[2741, "recovery", "metrics_updated", {"cwnd": 16853,"pacing_rate": 27516483,"bytes_in_flight": 1916,"smoothed_rtt": 2591,"latest_rtt": 2741}],
+[2944, "transport", "spin_bit_updated", { "state": true }],
+[2944, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 3, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "handshake_done"}, { 
+    "frame_type": "padding"}]}],
+[2944, "recovery", "metrics_updated", {"bytes_in_flight": 1971,"smoothed_rtt": 2591}],
+[2944, "transport", "datagram_sent", { "byte_length": 55}],
+[3752, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 4, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "ack", "ack_delay": 126, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "padding"}]}],
+[3752, "recovery", "metrics_updated", {"bytes_in_flight": 2026,"smoothed_rtt": 2591}],
+[3752, "transport", "datagram_sent", { "byte_length": 55}],
+[59442, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 0,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 0,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 405}}],
+[59442, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 414, "packet_number": 5, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "b74a2b3715daf4bef42fe0283cf9010a5195d98864ab12a1b020c6f78bf452aaf8db0223b5c11216769c7c23dd3e769043fa"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "e2412aaf3daad085", "reset_token": "92fc1696deb229523b8a89121794b01e"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "4b6021975384db32", "reset_token": "de36a44f2cb57d2aac3eab19424bcced"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "fd73e6f15b477d0c", "reset_token": "82780e33989f8c21557276ca865eb65f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "9e3e4edb30a121ab", "reset_token": "f1163fa955b9423849f764cb22ccc260"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "eb1825cf608f7d31", "reset_token": "a949dbda8ad834927d338ea7515c2d35"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "f20c7158fe3193ed", "reset_token": "bfdad880c1eeca0fca414154874ff03d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "d9be7b87a22a7107", "reset_token": "597f1b515dc0e22f0fd3cb27500120fa"}, { 
+    "frame_type": "ack", "ack_delay": 7087, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}]}],
+[59442, "recovery", "metrics_updated", {"bytes_in_flight": 2035,"smoothed_rtt": 2591}],
+[59442, "transport", "datagram_sent", { "byte_length": 430}],
+[105892, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 1,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 1,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 1424}}],
+[105892, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 2,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 2,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[105892, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 3,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 3,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[105892, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 6, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "handshake_done"}, { 
+    "frame_type": "ack", "ack_delay": 12893, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "padding"}]}],
+[105892, "recovery", "metrics_updated", {"cwnd": 3072,"bytes_in_flight": 540,"smoothed_rtt": 2591}],
+[105892, "transport", "datagram_sent", { "byte_length": 55}],
+[105892, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 4,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 4,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[105892, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 1384, "packet_number": 7, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "ping"}, { 
+    "frame_type": "padding"}]}],
+[105892, "recovery", "metrics_updated", {"bytes_in_flight": 1885,"smoothed_rtt": 2591}],
+[105892, "transport", "datagram_sent", { "byte_length": 1400}],
+[159677, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 5,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 5,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 414}}],
+[159677, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 416, "packet_number": 8, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "b74a2b3715daf4bef42fe0283cf9010a5195d98864ab12a1b020c6f78bf452aaf8db0223b5c11216769c7c23dd3e769043fa"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "e2412aaf3daad085", "reset_token": "92fc1696deb229523b8a89121794b01e"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "4b6021975384db32", "reset_token": "de36a44f2cb57d2aac3eab19424bcced"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "fd73e6f15b477d0c", "reset_token": "82780e33989f8c21557276ca865eb65f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "9e3e4edb30a121ab", "reset_token": "f1163fa955b9423849f764cb22ccc260"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "eb1825cf608f7d31", "reset_token": "a949dbda8ad834927d338ea7515c2d35"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "f20c7158fe3193ed", "reset_token": "bfdad880c1eeca0fca414154874ff03d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "d9be7b87a22a7107", "reset_token": "597f1b515dc0e22f0fd3cb27500120fa"}, { 
+    "frame_type": "ack", "ack_delay": 19617, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}]}],
+[159677, "recovery", "metrics_updated", {"bytes_in_flight": 1887,"smoothed_rtt": 2591}],
+[159677, "transport", "datagram_sent", { "byte_length": 432}],
+[307123, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 6,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 6,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[307123, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 9, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "handshake_done"}, { 
+    "frame_type": "ack", "ack_delay": 38047, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "padding"}]}],
+[307123, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[307123, "transport", "datagram_sent", { "byte_length": 55}],
+[307123, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 7,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 7,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 1384}}],
+[359832, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 8,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 8,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 416}}],
+[359832, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 416, "packet_number": 10, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "b74a2b3715daf4bef42fe0283cf9010a5195d98864ab12a1b020c6f78bf452aaf8db0223b5c11216769c7c23dd3e769043fa"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "e2412aaf3daad085", "reset_token": "92fc1696deb229523b8a89121794b01e"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "4b6021975384db32", "reset_token": "de36a44f2cb57d2aac3eab19424bcced"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "fd73e6f15b477d0c", "reset_token": "82780e33989f8c21557276ca865eb65f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "9e3e4edb30a121ab", "reset_token": "f1163fa955b9423849f764cb22ccc260"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "eb1825cf608f7d31", "reset_token": "a949dbda8ad834927d338ea7515c2d35"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "f20c7158fe3193ed", "reset_token": "bfdad880c1eeca0fca414154874ff03d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "d9be7b87a22a7107", "reset_token": "597f1b515dc0e22f0fd3cb27500120fa"}, { 
+    "frame_type": "ack", "ack_delay": 44636, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}]}],
+[359832, "recovery", "metrics_updated", {"bytes_in_flight": 487,"smoothed_rtt": 2591}],
+[359832, "transport", "datagram_sent", { "byte_length": 432}],
+[707130, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 9,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 9,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[707130, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 11, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "handshake_done"}, { 
+    "frame_type": "ack", "ack_delay": 88048, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "padding"}]}],
+[707130, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[707130, "transport", "datagram_sent", { "byte_length": 55}],
+[764996, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 10,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 10,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 416}}],
+[764996, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 416, "packet_number": 12, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "b74a2b3715daf4bef42fe0283cf9010a5195d98864ab12a1b020c6f78bf452aaf8db0223b5c11216769c7c23dd3e769043fa"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "e2412aaf3daad085", "reset_token": "92fc1696deb229523b8a89121794b01e"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "4b6021975384db32", "reset_token": "de36a44f2cb57d2aac3eab19424bcced"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "fd73e6f15b477d0c", "reset_token": "82780e33989f8c21557276ca865eb65f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "9e3e4edb30a121ab", "reset_token": "f1163fa955b9423849f764cb22ccc260"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "eb1825cf608f7d31", "reset_token": "a949dbda8ad834927d338ea7515c2d35"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "f20c7158fe3193ed", "reset_token": "bfdad880c1eeca0fca414154874ff03d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "d9be7b87a22a7107", "reset_token": "597f1b515dc0e22f0fd3cb27500120fa"}, { 
+    "frame_type": "ack", "ack_delay": 95281, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}]}],
+[764996, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[764996, "transport", "datagram_sent", { "byte_length": 432}],
+[1743349, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 11,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 11,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[1743349, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 13, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "handshake_done"}, { 
+    "frame_type": "ack", "ack_delay": 217576, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "padding"}]}],
+[1743349, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[1743349, "transport", "datagram_sent", { "byte_length": 55}],
+[1743349, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 12,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 12,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 416}}],
+[1743349, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 416, "packet_number": 14, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "b74a2b3715daf4bef42fe0283cf9010a5195d98864ab12a1b020c6f78bf452aaf8db0223b5c11216769c7c23dd3e769043fa"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "e2412aaf3daad085", "reset_token": "92fc1696deb229523b8a89121794b01e"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "4b6021975384db32", "reset_token": "de36a44f2cb57d2aac3eab19424bcced"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "fd73e6f15b477d0c", "reset_token": "82780e33989f8c21557276ca865eb65f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "9e3e4edb30a121ab", "reset_token": "f1163fa955b9423849f764cb22ccc260"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "eb1825cf608f7d31", "reset_token": "a949dbda8ad834927d338ea7515c2d35"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "f20c7158fe3193ed", "reset_token": "bfdad880c1eeca0fca414154874ff03d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "d9be7b87a22a7107", "reset_token": "597f1b515dc0e22f0fd3cb27500120fa"}, { 
+    "frame_type": "ack", "ack_delay": 217576, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}]}],
+[1743349, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[1743349, "transport", "datagram_sent", { "byte_length": 432}],
+[3343360, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 13,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 13,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[3343360, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 15, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "handshake_done"}, { 
+    "frame_type": "ack", "ack_delay": 417577, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "padding"}]}],
+[3343360, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[3343360, "transport", "datagram_sent", { "byte_length": 55}],
+[3343360, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 14,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 14,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 416}}],
+[3343360, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 417, "packet_number": 16, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "b74a2b3715daf4bef42fe0283cf9010a5195d98864ab12a1b020c6f78bf452aaf8db0223b5c11216769c7c23dd3e769043fa"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "e2412aaf3daad085", "reset_token": "92fc1696deb229523b8a89121794b01e"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "4b6021975384db32", "reset_token": "de36a44f2cb57d2aac3eab19424bcced"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "fd73e6f15b477d0c", "reset_token": "82780e33989f8c21557276ca865eb65f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "9e3e4edb30a121ab", "reset_token": "f1163fa955b9423849f764cb22ccc260"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "eb1825cf608f7d31", "reset_token": "a949dbda8ad834927d338ea7515c2d35"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "f20c7158fe3193ed", "reset_token": "bfdad880c1eeca0fca414154874ff03d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "d9be7b87a22a7107", "reset_token": "597f1b515dc0e22f0fd3cb27500120fa"}, { 
+    "frame_type": "ack", "ack_delay": 417577, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}]}],
+[3343360, "recovery", "metrics_updated", {"bytes_in_flight": 488,"smoothed_rtt": 2591}],
+[3343360, "transport", "datagram_sent", { "byte_length": 433}],
+[5346095, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 15,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 15,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[5346095, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 17, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "handshake_done"}, { 
+    "frame_type": "ack", "ack_delay": 667919, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "padding"}]}],
+[5346095, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[5346095, "transport", "datagram_sent", { "byte_length": 55}],
+[5346095, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 16,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 16,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 417}}],
+[5346095, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 417, "packet_number": 18, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "b74a2b3715daf4bef42fe0283cf9010a5195d98864ab12a1b020c6f78bf452aaf8db0223b5c11216769c7c23dd3e769043fa"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "e2412aaf3daad085", "reset_token": "92fc1696deb229523b8a89121794b01e"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "4b6021975384db32", "reset_token": "de36a44f2cb57d2aac3eab19424bcced"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "fd73e6f15b477d0c", "reset_token": "82780e33989f8c21557276ca865eb65f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "9e3e4edb30a121ab", "reset_token": "f1163fa955b9423849f764cb22ccc260"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "eb1825cf608f7d31", "reset_token": "a949dbda8ad834927d338ea7515c2d35"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "f20c7158fe3193ed", "reset_token": "bfdad880c1eeca0fca414154874ff03d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "d9be7b87a22a7107", "reset_token": "597f1b515dc0e22f0fd3cb27500120fa"}, { 
+    "frame_type": "ack", "ack_delay": 667919, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}]}],
+[5346095, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[5346095, "transport", "datagram_sent", { "byte_length": 433}],
+[7347487, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 17,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 17,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[7347487, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 39, "packet_number": 19, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "handshake_done"}, { 
+    "frame_type": "ack", "ack_delay": 918093, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}, { 
+    "frame_type": "padding"}]}],
+[7347487, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[7347487, "transport", "datagram_sent", { "byte_length": 55}],
+[7347487, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 18,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 18,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 417}}],
+[7347487, "transport", "packet_sent", { "packet_type": "1RTT", "header": { "packet_size": 417, "packet_number": 20, "dcid": "eabb0e7cb0b8bcf7" }, "frames": [{ 
+    "frame_type": "crypto", "offset": 0, "length": 143}, { 
+    "frame_type": "new_token", "new_token": "b74a2b3715daf4bef42fe0283cf9010a5195d98864ab12a1b020c6f78bf452aaf8db0223b5c11216769c7c23dd3e769043fa"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 1, "retire_before": 0, "connection_id": "e2412aaf3daad085", "reset_token": "92fc1696deb229523b8a89121794b01e"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 2, "retire_before": 0, "connection_id": "4b6021975384db32", "reset_token": "de36a44f2cb57d2aac3eab19424bcced"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 3, "retire_before": 0, "connection_id": "fd73e6f15b477d0c", "reset_token": "82780e33989f8c21557276ca865eb65f"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 4, "retire_before": 0, "connection_id": "9e3e4edb30a121ab", "reset_token": "f1163fa955b9423849f764cb22ccc260"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 5, "retire_before": 0, "connection_id": "eb1825cf608f7d31", "reset_token": "a949dbda8ad834927d338ea7515c2d35"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 6, "retire_before": 0, "connection_id": "f20c7158fe3193ed", "reset_token": "bfdad880c1eeca0fca414154874ff03d"}, { 
+    "frame_type": "new_connection_id", "sequence_number": 7, "retire_before": 0, "connection_id": "d9be7b87a22a7107", "reset_token": "597f1b515dc0e22f0fd3cb27500120fa"}, { 
+    "frame_type": "ack", "ack_delay": 918093, "acked_ranges": [[1, 1]], "ect0": 1, "ect1": 0, "ce": 0}]}],
+[7347487, "recovery", "metrics_updated", {"smoothed_rtt": 2591}],
+[7347487, "transport", "datagram_sent", { "byte_length": 433}],
+[9348428, "recovery", "packet_lost", {
+    "packet_type" : "1RTT",
+    "packet_number" : 19,
+    "trigger": "timer",
+    "header": {
+        "packet_type" : "1RTT",
+        "packet_number" : 19,
+        "dcid" : "eabb0e7cb0b8bcf7",
+        "packet_size" : 39}}],
+[9348502, "info", "message", { "message": "Closed. Retrans= 15, spurious= 0, max sp gap = 0, max sp delay = 0, dg-coal: 1.000000"}]]}]}

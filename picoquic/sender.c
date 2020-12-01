@@ -3747,6 +3747,7 @@ int picoquic_prepare_packet_ex(picoquic_cnx_t* cnx,
                 }
             }
             if (packet_size > 0) {
+                printf("SENT ANOTHER PACKET\n");
                 cnx->nb_packets_sent++;
                 /* if needed, log that the packet is sent */
                 picoquic_log_pdu(cnx, 0, current_time,

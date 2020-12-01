@@ -1032,6 +1032,7 @@ static void picoquic_insert_cnx_by_wake_time(picoquic_quic_t* quic, picoquic_cnx
 
 void picoquic_reinsert_by_wake_time(picoquic_quic_t* quic, picoquic_cnx_t* cnx, uint64_t next_time)
 {
+    // printf("reinsert again! Next wake time is %ld\n", next_time);
     picoquic_remove_cnx_from_wake_list(cnx);
     cnx->next_wake_time = next_time;
     picoquic_insert_cnx_by_wake_time(quic, cnx);
@@ -1040,14 +1041,14 @@ void picoquic_reinsert_by_wake_time(picoquic_quic_t* quic, picoquic_cnx_t* cnx, 
 picoquic_cnx_t* picoquic_get_earliest_cnx_to_wake(picoquic_quic_t* quic, uint64_t max_wake_time)
 {
     picoquic_cnx_t* cnx = (picoquic_cnx_t *)picoquic_wake_list_node_value(picosplay_first(&quic->cnx_wake_tree));
-    if (cnx != NULL) {
-        printf("CONNECTION IS NOT NULL\n");
-    }
-    printf("max wake time is %ld\n", max_wake_time);
-    printf("connection next wake time is %ld\n", cnx->next_wake_time);
-    if (cnx->next_wake_time > max_wake_time) {
-        printf("cnx next wake time > max wake time! WAKE TOO LATE\n");
-    }
+    // if (cnx != NULL) {
+    //     printf("CONNECTION IS NOT NULL\n");
+    // }
+    // printf("max wake time is %ld\n", max_wake_time);
+    // printf("connection next wake time is %ld\n", cnx->next_wake_time);
+    // if (cnx->next_wake_time > max_wake_time) {
+    //     printf("cnx next wake time > max wake time! WAKE TOO LATE\n");
+    // }
     if (cnx != NULL && max_wake_time != 0 && cnx->next_wake_time > max_wake_time)
     {
         cnx = NULL;
@@ -4194,9 +4195,11 @@ int picoquic_shallow_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_s
     picoquic_cnx_t* connection_to_migrate = NULL;
     //need to be changed in the future, for now just get one connection!
     connection_to_migrate = old_server->cnx_list;
+    picoquic_remove_cnx_from_list(connection_to_migrate);
     //copy the data from the connection!
     connection_to_migrate->quic = new_server;
     picoquic_insert_cnx_in_list(new_server, connection_to_migrate);
+    connection_to_migrate->next_wake_time = picoquic_get_quic_time(new_server);
     picoquic_insert_cnx_by_wake_time(new_server, connection_to_migrate);
     picoquic_local_cnxid_t* cnxid1 = picoquic_create_local_cnxid(connection_to_migrate, NULL);
     if (cnxid1 != NULL){

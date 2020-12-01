@@ -563,6 +563,7 @@ int sample_server_migration_callback(picoquic_cnx_t* cnx,
             }
             break;
         case picoquic_callback_prepare_to_send:
+            // printf("case prepare to send\n");
             /* Active sending API */
             if (stream_ctx == NULL) {
                 /* This should never happen */

@@ -533,12 +533,16 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
                     if (((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag){
                         printf("migrated to the back-up server!!\n");
                         ((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag = 0;
-                    picoquic_shallow_migrate(quic, quic_back);
+                    
+                    // current_time = picoquic_get_quic_time(quic_back);
+                    // loop_time = current_time;
+                    // quic_back->cnx_list->next_wake_time = loop_time;
+                    // picoquic_shallow_migrate(quic, quic_back);
                     // quic_back->cnx_list->next_wake_time = loop_time;
                     // quic_back-> cnx_list = quic->cnx_list;
                     // quic_back->cnx_last = quic->cnx_last;
                     // last_cnx = quic->cnx_list;
-                    quic = quic_back;
+                    // quic = quic_back;
                     
                 }
                 }
