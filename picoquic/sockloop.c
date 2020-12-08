@@ -460,6 +460,7 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
             buffer, sizeof(buffer),
             delta_t, &socket_rank, &current_time);
 
+
         nb_loops++;
         if (nb_loops >= 100) {
             uint64_t loop_delta = current_time - loop_count_time;
@@ -512,10 +513,13 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
                     ((struct sockaddr_in*) & addr_to)->sin_port = current_recv_port;
                 }
                 /* Submit the packet to the server */
-                (void)picoquic_incoming_packet(quic, buffer,
+                ret = picoquic_incoming_packet(quic, buffer,
                     (size_t)bytes_recv, (struct sockaddr*) & addr_from,
                     (struct sockaddr*) & addr_to, if_index_to, received_ecn,
                     current_time);
+
+                // with and without migration
+                // printf("picoquic_incoming_packet reture %d\n", ret);
 
                 if (loop_callback != NULL) {
                     ret = loop_callback(quic, picoquic_packet_loop_after_receive, loop_callback_ctx);
@@ -537,12 +541,12 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
                     // current_time = picoquic_get_quic_time(quic_back);
                     // loop_time = current_time;
                     // quic_back->cnx_list->next_wake_time = loop_time;
-                    // picoquic_shallow_migrate(quic, quic_back);
+                    picoquic_shallow_migrate(quic, quic_back);
                     // quic_back->cnx_list->next_wake_time = loop_time;
                     // quic_back-> cnx_list = quic->cnx_list;
                     // quic_back->cnx_last = quic->cnx_last;
                     // last_cnx = quic->cnx_list;
-                    // quic = quic_back;
+                    quic = quic_back;
                     
                 }
                 }
@@ -562,6 +566,7 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
                 */
 
                 if (ret == 0 && send_length > 0) {
+                    // printf("send packet!\n");
                     SOCKET_TYPE send_socket = INVALID_SOCKET;
                     loop_count_time = current_time;
                     nb_loops = 0;
@@ -573,6 +578,7 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
                     }
 
                     if (send_socket == INVALID_SOCKET) {
+                        // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
                         sock_ret = -1;
                         sock_err = -1;
                     }
@@ -591,6 +597,7 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
                         sock_ret = picoquic_send_through_socket(send_socket,
                             (struct sockaddr*) & peer_addr, (struct sockaddr*) & local_addr, if_index,
                             (const char*)send_buffer, (int)send_length, &sock_err);
+                        // printf("sock_ret is %d\n", sock_ret);
                     }
 
                     if (sock_ret <= 0) {

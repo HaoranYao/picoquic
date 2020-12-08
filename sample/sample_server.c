@@ -511,7 +511,7 @@ int sample_server_migration_callback(picoquic_cnx_t* cnx,
         switch (fin_or_event) {
         case picoquic_callback_stream_data:
         case picoquic_callback_stream_fin:
-            printf("###EVENT case picoquic_callback_stream_fin\n");
+            // printf("###EVENT case picoquic_callback_stream_fin\n");
             /* Data arrival on stream #x, maybe with fin mark */
             if (stream_ctx == NULL) {
                 /* Create and initialize stream context */
@@ -623,19 +623,19 @@ int sample_server_migration_callback(picoquic_cnx_t* cnx,
             /* This callback is never used. */
             break;
         case picoquic_callback_almost_ready:
-            printf("###EVENT case picoquic_callback_almost_ready\n");
+            // printf("###EVENT case picoquic_callback_almost_ready\n");
             // printf("server flag is %d\n", server_ctx->server_flag);
             // if (server_ctx->server_flag) {
             //     server_ctx->migration_flag = 1;
             //     /* code */
             // }
-            printf("server number is %d\n", server_ctx->server_flag);
+            // printf("server number is %d\n", server_ctx->server_flag);
             // printf("migration flag in callback is%d\n",server_ctx->migration_flag);
             break;
             // time to migrate
             
         case picoquic_callback_ready:
-            printf("###EVENT case picoquic_callback_ready\n");
+            // printf("###EVENT case picoquic_callback_ready\n");
             if (server_ctx->server_flag) {
                 server_ctx->migration_flag = 1;
                 /* code */
@@ -772,6 +772,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     /* Create the QUIC context for the server */
     current_time = picoquic_current_time();
     /* Create QUIC context */
+    // TODO: start another thread here and have this quic in this thread
     quic = picoquic_create(8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
         sample_server_migration_callback, &default_migration_context, NULL, NULL, NULL, current_time, NULL, NULL, NULL, 0);
 

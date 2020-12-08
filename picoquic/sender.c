@@ -1016,7 +1016,7 @@ void picoquic_finalize_and_protect_packet(picoquic_cnx_t *cnx, picoquic_packet_t
     if (length != 0 && length < header_length) {
         length = 0;
     }
-
+    // printf("ret value is %d, and length value is %ld\n" ,ret ,length);   
     if (ret == 0 && length > 0) {
         packet->length = length;
         cnx->pkt_ctx[packet->pc].send_sequence++;
@@ -1026,12 +1026,13 @@ void picoquic_finalize_and_protect_packet(picoquic_cnx_t *cnx, picoquic_packet_t
         packet->delivered_time_prior = path_x->delivered_time_last;
         packet->delivered_sent_prior = path_x->delivered_sent_last;
         packet->delivered_app_limited = (cnx->cnx_state < picoquic_state_ready || path_x->delivered_limited_index != 0);
-
+        // printf("packt type is %d\n", packet->ptype);
         switch (packet->ptype) {
         case picoquic_packet_version_negotiation:
             /* Packet is not encrypted */
             break;
         case picoquic_packet_initial:
+            // printf("case picoquic_packet_initial in picoquic_finalize_and_protect_packet function\n");
             length = picoquic_protect_packet(cnx, packet->ptype, packet->bytes, packet->sequence_number,
                 remote_cnxid, local_cnxid,
                 length, header_length,
@@ -1039,6 +1040,7 @@ void picoquic_finalize_and_protect_packet(picoquic_cnx_t *cnx, picoquic_packet_t
                 path_x, current_time);
             break;
         case picoquic_packet_handshake:
+            // printf("case picoquic_packet_handshake in picoquic_finalize_and_protect_packet function\n");
             length = picoquic_protect_packet(cnx, packet->ptype, packet->bytes, packet->sequence_number,
                 remote_cnxid, local_cnxid,
                 length, header_length,
@@ -1046,6 +1048,7 @@ void picoquic_finalize_and_protect_packet(picoquic_cnx_t *cnx, picoquic_packet_t
                 path_x, current_time);
             break;
         case picoquic_packet_retry:
+            // printf("case picoquic_packet_retry in picoquic_finalize_and_protect_packet function\n");
             length = picoquic_protect_packet(cnx, packet->ptype, packet->bytes, packet->sequence_number,
                 remote_cnxid, local_cnxid,
                 length, header_length,
@@ -1053,6 +1056,7 @@ void picoquic_finalize_and_protect_packet(picoquic_cnx_t *cnx, picoquic_packet_t
                 path_x, current_time);
             break;
         case picoquic_packet_0rtt_protected:
+            // printf("case picoquic_packet_0rtt_protected in picoquic_finalize_and_protect_packet function\n");
             length = picoquic_protect_packet(cnx, packet->ptype, packet->bytes, packet->sequence_number, 
                 remote_cnxid, local_cnxid,
                 length, header_length,
@@ -1060,6 +1064,7 @@ void picoquic_finalize_and_protect_packet(picoquic_cnx_t *cnx, picoquic_packet_t
                 path_x, current_time);
             break;
         case picoquic_packet_1rtt_protected:
+            // printf("case picoquic_packet_1rtt_protected in picoquic_finalize_and_protect_packet function\n");
             length = picoquic_protect_packet(cnx, packet->ptype, packet->bytes, packet->sequence_number,
                 remote_cnxid, local_cnxid,
                 length, header_length,
@@ -1067,6 +1072,7 @@ void picoquic_finalize_and_protect_packet(picoquic_cnx_t *cnx, picoquic_packet_t
                 path_x, current_time);
             break;
         default:
+            // printf("packet type errrrrrrrrror!\n");
             /* Packet type error. Do nothing at all. */
             length = 0;
             break;
@@ -3122,8 +3128,10 @@ int picoquic_prepare_packet_ready(picoquic_cnx_t* cnx, picoquic_path_t* path_x, 
         packet->checksum_overhead = checksum_overhead;
     }
     else if (ret == 0) {
+        // printf("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHere? not retransmit packet\n");
         length = picoquic_predict_packet_header_length(
             cnx, packet_type);
+        // printf("##############################length is%ld\n", length);
         packet->ptype = packet_type;
         packet->offset = length;
         header_length = length;
@@ -3131,12 +3139,13 @@ int picoquic_prepare_packet_ready(picoquic_cnx_t* cnx, picoquic_path_t* path_x, 
         packet->send_time = current_time;
         packet->send_path = path_x;
         bytes_next = bytes + length;
-
+        // printf("length in 3142 line sender.c is %ld\n", length);
         /* If required, prepare challenge and response frames.
          * These frames will be sent immediately, regardless of pacing or flow control.
          */
 
         if (path_x->challenge_verified == 0 && path_x->challenge_failed == 0) {
+            // printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@path failed!\n");
             uint64_t next_challenge_time = picoquic_next_challenge_time(cnx, path_x);
             if (next_challenge_time <= current_time || path_x->challenge_repeat_count == 0) {
                 if (path_x->challenge_repeat_count < PICOQUIC_CHALLENGE_REPEAT_MAX) {
@@ -3205,6 +3214,7 @@ int picoquic_prepare_packet_ready(picoquic_cnx_t* cnx, picoquic_path_t* path_x, 
 
         /* Compute the length before pacing block */
         length = bytes_next - bytes;
+        // printf("length in 3216 line sender.c is %ld\n", length);
 
         if (cnx->cnx_state != picoquic_state_disconnected && path_x->challenge_verified != 0) {
             /* There are no frames yet that would be exempt from pacing control, but if there
@@ -3259,6 +3269,7 @@ int picoquic_prepare_packet_ready(picoquic_cnx_t* cnx, picoquic_path_t* path_x, 
 
                 /* Compute the length before entering the CC block */
                 length = bytes_next - bytes;
+                // printf("length in 3270 line sender.c is %ld\n", length);
 
                 if (path_x->cwin < path_x->bytes_in_transit) {
                     cnx->cwin_blocked = 1;
@@ -3320,6 +3331,7 @@ int picoquic_prepare_packet_ready(picoquic_cnx_t* cnx, picoquic_path_t* path_x, 
                         }
 
                         length = bytes_next - bytes;
+                        // printf("length in 3333 line sender.c is %ld\n", length);
 
                         if (length <= header_length || is_pure_ack) {
                             /* Mark the bandwidth estimation as application limited */
@@ -3327,6 +3339,7 @@ int picoquic_prepare_packet_ready(picoquic_cnx_t* cnx, picoquic_path_t* path_x, 
                             /* Notify the peer if something is blocked */
                             bytes_next = picoquic_format_blocked_frames(cnx, &bytes[length], bytes_max, &more_data, &is_pure_ack);
                             length = bytes_next - bytes;
+                            // printf("length in 3341 line sender.c is %ld\n", length);
                         }
 
                         if (stream_tried_and_failed && datagram_tried_and_failed) {
@@ -3358,8 +3371,9 @@ int picoquic_prepare_packet_ready(picoquic_cnx_t* cnx, picoquic_path_t* path_x, 
             } /* End of pacing */
         } /* End of challenge verified */
     }
-
+    // printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@length here is %ld\n", length);
     if (length <= header_length) {
+        // printf("WRRRRRRRRRRRRRRRRRRRRRRRRRRRRONG\n");
         length = 0;
     }
 
@@ -3429,13 +3443,14 @@ int picoquic_prepare_packet_ready(picoquic_cnx_t* cnx, picoquic_path_t* path_x, 
         else {
             length = picoquic_pad_to_policy(cnx, bytes, length, (uint32_t)(send_buffer_min_max - checksum_overhead));
         }
+        // printf("length in 3444 line sender.c is %ld\n", length);
     }
-
+    // printf("############################################################################\n");
     picoquic_finalize_and_protect_packet(cnx, packet,
         ret, length, header_length, checksum_overhead,
         send_length, send_buffer, send_buffer_min_max,
         &path_x->remote_cnxid, &path_x->p_local_cnxid->cnx_id, path_x, current_time);
-
+    // printf("send_length in the sender.c is %ld\n", *send_length);
     if (*send_length > 0) {
         *next_wake_time = current_time;
         SET_LAST_WAKE(cnx->quic, PICOQUIC_SENDER);
@@ -3496,7 +3511,7 @@ int picoquic_prepare_segment(picoquic_cnx_t* cnx, picoquic_path_t* path_x, picoq
     cnx->cwin_blocked = 0;
     cnx->flow_blocked = 0;
     cnx->stream_blocked = 0;
-
+    // printf("connection state is %d\n", cnx->cnx_state);
     /* Prepare header -- depend on connection state */
     /* TODO: 0-RTT work. */
     switch (cnx->cnx_state) {
@@ -3613,7 +3628,7 @@ int picoquic_prepare_packet_ex(picoquic_cnx_t* cnx,
     uint64_t current_time, uint8_t* send_buffer, size_t send_buffer_max, size_t* send_length,
     struct sockaddr_storage * p_addr_to, struct sockaddr_storage * p_addr_from, int* if_index, size_t* send_msg_size)
 {
-
+    // printf("picoquic_prepare_packet_ex function\n");
     int ret;
     picoquic_packet_t * packet = NULL;
     struct sockaddr_storage addr_to_log;
@@ -3632,7 +3647,7 @@ int picoquic_prepare_packet_ex(picoquic_cnx_t* cnx,
     *send_length = 0;
 
     ret = picoquic_check_idle_timer(cnx, &next_wake_time, current_time);
-
+    // printf("picoquic_check_idle_timer returen value is %d\n",ret);
     if (send_buffer_max < PICOQUIC_ENFORCED_INITIAL_MTU) {
         DBG_PRINTF("Invalid buffer size: %zu", send_buffer_max);
         ret = -1;
@@ -3712,10 +3727,13 @@ int picoquic_prepare_packet_ex(picoquic_cnx_t* cnx,
                     break;
                 }
                 else {
+                    // printf("new packet is created here\n");
                     ret = picoquic_prepare_segment(cnx, cnx->path[path_id], packet, current_time,
                         packet_buffer + packet_size, available, &segment_length, &next_wake_time, &is_initial_sent);
-
+                    // printf("picoquic_prepare_segment returen value in sender.c is %d\n", ret);
                     if (ret == 0) {
+                        // printf("segment_length is %ld\n", segment_length);
+                        // printf("packet length in the sender.c is %ld\n", packet->length);
                         packet_size += segment_length;
                         if (packet->length == 0) {
                             /* Nothing more to send */
@@ -3746,8 +3764,9 @@ int picoquic_prepare_packet_ex(picoquic_cnx_t* cnx,
                     }
                 }
             }
+            // printf("packet_size in picoquic_prepare_packet_ex function at sender.c is %ld\n", packet_size);
             if (packet_size > 0) {
-                printf("SENT ANOTHER PACKET\n");
+                // printf("SENT ANOTHER PACKET\n");
                 cnx->nb_packets_sent++;
                 /* if needed, log that the packet is sent */
                 picoquic_log_pdu(cnx, 0, current_time,
@@ -3872,10 +3891,11 @@ int picoquic_prepare_next_packet_ex(picoquic_quic_t* quic,
         picoquic_cnx_t* cnx = picoquic_get_earliest_cnx_to_wake(quic, current_time);
 
         if (cnx == NULL) {
-            printf("can not get connection\n");
+            // printf("can not get connection\n");
             *send_length = 0;
         }
         else {
+            // printf("picoquic_prepare_next_packet_ex function at sender!\n");
             ret = picoquic_prepare_packet_ex(cnx, current_time, send_buffer, send_buffer_max, send_length, p_addr_to, p_addr_from, 
                 if_index, send_msg_size);
             if (log_cid != NULL) {

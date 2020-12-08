@@ -1049,10 +1049,10 @@ picoquic_cnx_t* picoquic_get_earliest_cnx_to_wake(picoquic_quic_t* quic, uint64_
     // if (cnx->next_wake_time > max_wake_time) {
     //     printf("cnx next wake time > max wake time! WAKE TOO LATE\n");
     // }
-    if (cnx != NULL && max_wake_time != 0 && cnx->next_wake_time > max_wake_time)
-    {
-        cnx = NULL;
-    }
+    // if (cnx != NULL && max_wake_time != 0 && cnx->next_wake_time > max_wake_time)
+    // {
+    //     cnx = NULL;
+    // }
     
     return cnx;
 }
@@ -4199,16 +4199,27 @@ int picoquic_shallow_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_s
     //copy the data from the connection!
     connection_to_migrate->quic = new_server;
     picoquic_insert_cnx_in_list(new_server, connection_to_migrate);
+    // update the wake time
     connection_to_migrate->next_wake_time = picoquic_get_quic_time(new_server);
     picoquic_insert_cnx_by_wake_time(new_server, connection_to_migrate);
-    picoquic_local_cnxid_t* cnxid1 = picoquic_create_local_cnxid(connection_to_migrate, NULL);
-    if (cnxid1 != NULL){
-        /* copy the connection ID into the local parameter */
-        connection_to_migrate->local_parameters.prefered_address.connection_id = cnxid1->cnx_id;
-        /* Create the reset secret */
-        (void)picoquic_create_cnxid_reset_secret(connection_to_migrate->quic, &cnxid1->cnx_id,
-        connection_to_migrate->local_parameters.prefered_address.statelessResetToken);
-    }
+    // create the local connection id
+    // picoquic_local_cnxid_t* cnxid1 = picoquic_create_local_cnxid(connection_to_migrate, NULL);
+    // if (cnxid1 != NULL){
+    //     /* copy the connection ID into the local parameter */
+    //     connection_to_migrate->local_parameters.prefered_address.connection_id = cnxid1->cnx_id;
+    //     /* Create the reset secret */
+    //     (void)picoquic_create_cnxid_reset_secret(connection_to_migrate->quic, &cnxid1->cnx_id,
+    //     connection_to_migrate->local_parameters.prefered_address.statelessResetToken);
+    // }
+    /* Registration of per path connection ID in server context */
+    picoquic_local_cnxid_t* l_cid = connection_to_migrate->local_cnxid_first;
+    // l_cid = (picoquic_local_cnxid_t*)malloc(sizeof(picoquic_local_cnxid_t));
+    // cnx->local_cnxid_first = l_cid;
+
+    picoquic_register_cnx_id(new_server, connection_to_migrate, l_cid);
+
+/* Register or update default address and reset secret */
+    // picoquic_register_net_secret(cnx);
     picoquic_register_net_icid(connection_to_migrate);
     printf("shallow copy finished here\n");
     return ret;
