@@ -32,6 +32,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <picohash.h>
 #include <unistd.h>
 #endif
 
@@ -631,6 +632,17 @@ int picoquic_incoming_packet(
     unsigned char received_ecn,
     uint64_t current_time);
 
+
+int picoquic_incoming_packet_master(
+    picoquic_quic_t* quic,
+    picohash_table* cnx_id_table,
+    uint8_t* bytes,
+    size_t length,
+    struct sockaddr* addr_from,
+    struct sockaddr* addr_to,
+    int if_index_to,
+    unsigned char received_ecn,
+    uint64_t current_time);
 /* Applications must regularly poll the "next packet" API to obtain the
  * next packet that will be set over the network. The API for that is
  * picoquic_prepare_next_packet", which operates on a "quic context".

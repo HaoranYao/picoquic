@@ -107,6 +107,8 @@ sys/socket.h
 -
 sys/types.h
 -
+picohash.h
+-
 unistd.h
 -
 
@@ -161,6 +163,8 @@ picosocks.h
 picoquic/picosocks.h
 picoquic.h
 picoquic/picoquic.h
+picohash.h
+picoquic/picohash.h
 
 picoquic/picoquic_unified_log.h
 picoquic.h

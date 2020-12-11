@@ -34,6 +34,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+// #include "picoquic_sample.h"
 
 #if 0
 uint8_t* picoquic_frames_varint_decode(uint8_t* bytes, const uint8_t* bytes_max, uint64_t* n64);
@@ -44,6 +45,13 @@ uint8_t* picoquic_frames_uint32_decode(uint8_t* bytes, const uint8_t* bytes_max,
 uint8_t* picoquic_frames_uint64_decode(uint8_t* bytes, const uint8_t* bytes_max, uint64_t* n);
 uint8_t* picoquic_frames_cid_decode(uint8_t* bytes, const uint8_t* bytes_max, picoquic_connection_id_t* n);
 #endif
+
+typedef struct st_picoquic_cnx_id_key_t {
+    picoquic_connection_id_t cnx_id;
+    picoquic_cnx_t* cnx;
+    picoquic_local_cnxid_t* l_cid;
+    struct st_picoquic_cnx_id_key_t* next_cnx_id;
+} picoquic_cnx_id_key_t;
 
 int picoquic_parse_long_packet_header(
     picoquic_quic_t* quic,
@@ -2120,6 +2128,255 @@ int picoquic_incoming_segment(
 
     return ret;
 }
+int picoquic_incoming_segment_master(
+    picoquic_quic_t* quic,
+    picohash_table* cnx_id_table,
+    uint8_t* bytes,
+    size_t length,
+    size_t packet_length,
+    size_t* consumed,
+    struct sockaddr* addr_from,
+    struct sockaddr* addr_to,
+    int if_index_to,
+    unsigned char received_ecn,
+    uint64_t current_time,
+    uint64_t receive_time,
+    picoquic_connection_id_t* previous_dest_id)
+{
+    int ret = 0;
+    picoquic_cnx_t* cnx = NULL;
+    picoquic_packet_header ph;
+    int new_context_created = 0;
+    int is_first_segment = 0;
+    int is_buffered = 0;
+
+    /* Parse the header and decrypt the segment */
+    ret = picoquic_parse_header_and_decrypt(quic, bytes, length, packet_length, addr_from,
+        current_time, &ph, &cnx, consumed, &new_context_created);
+
+    /* Verify that the segment coalescing is for the same destination ID */
+    if (picoquic_is_connection_id_null(previous_dest_id)) {
+        /* This is the first segment in the incoming packet */
+        *previous_dest_id = ph.dest_cnx_id;
+        is_first_segment = 1;
+
+
+        /* if needed, log that the packet is received */
+        if (cnx != NULL) {
+            picoquic_log_pdu(cnx, 1, current_time, addr_from, addr_to, packet_length);
+        }
+        else {
+            picoquic_log_quic_pdu(quic, 1, current_time, picoquic_val64_connection_id(ph.dest_cnx_id),
+                addr_from, addr_to, packet_length);
+        }
+    }
+    else {
+        if (ret == 0 && picoquic_compare_connection_id(previous_dest_id, &ph.dest_cnx_id) != 0) {
+            ret = PICOQUIC_ERROR_CNXID_SEGMENT;
+        }
+    }
+
+    if(cnx != NULL) {
+        picohash_item* item;
+        picoquic_cnx_id_key_t* key = (picoquic_cnx_id_key_t*)malloc(sizeof(picoquic_cnx_id_key_t));
+
+        if (key == NULL) {
+            ret = -1;
+        } else {
+            key->cnx_id = cnx->local_cnxid_first->cnx_id;
+            key->cnx = cnx;
+            key->l_cid = cnx->local_cnxid_first;
+            key->next_cnx_id = NULL;
+            item = picohash_retrieve(cnx_id_table, key);
+            if (item != NULL) {
+                printf("FIND THE CNX\n");
+            } else {
+                printf("ADD this connection to table\n");
+                ret = picohash_insert(cnx_id_table, key);
+            }
+        }
+    }
+    /* Store packet if received in advance of encryption keys */
+    if (ret == PICOQUIC_ERROR_AEAD_NOT_READY &&
+        cnx != NULL) {
+        is_buffered = picoquic_incoming_not_decrypted(cnx, &ph, current_time, bytes, length, addr_from, addr_to, if_index_to, received_ecn);
+    }
+
+    /* Log the incoming packet */
+    if (cnx != NULL) {
+        if (ret == 0) {
+            picoquic_log_packet(cnx, 1, current_time, &ph, bytes, *consumed);
+        }
+        else if (is_buffered) {
+            picoquic_log_buffered_packet(cnx, ph.ptype, current_time);
+        } else {
+            picoquic_log_dropped_packet(cnx, &ph, length, ret, bytes, current_time);
+        }
+    }
+
+    if (ret == PICOQUIC_ERROR_VERSION_NOT_SUPPORTED) {
+        if (packet_length >= PICOQUIC_ENFORCED_INITIAL_MTU) {
+            /* use the result of parsing to consider version negotiation */
+            picoquic_prepare_version_negotiation(quic, addr_from, addr_to, if_index_to, &ph, bytes);
+        }
+    } else if (ret == 0) {
+        if (cnx == NULL) {
+            /* Unexpected packet. Reject, drop and log. */
+            if (!picoquic_is_connection_id_null(&ph.dest_cnx_id)) {
+                picoquic_process_unexpected_cnxid(quic, length, addr_from, addr_to, if_index_to, &ph);
+            }
+            ret = PICOQUIC_ERROR_DETECTED;
+        }
+        else {
+            cnx->quic_bit_received_0 |= ph.quic_bit_is_zero;
+            switch (ph.ptype) {
+            case picoquic_packet_version_negotiation:
+                ret = picoquic_incoming_version_negotiation(
+                    cnx, bytes, length, addr_from, &ph, current_time);
+                break;
+            case picoquic_packet_initial:
+                /* Initial packet: either crypto handshakes or acks. */
+                if ((!cnx->client_mode && picoquic_compare_connection_id(&ph.dest_cnx_id, &cnx->initial_cnxid) == 0) ||
+                    picoquic_compare_connection_id(&ph.dest_cnx_id, &cnx->path[0]->p_local_cnxid->cnx_id) == 0) {
+                    /* Verify that the source CID matches expectation */
+                    if (picoquic_is_connection_id_null(&cnx->path[0]->remote_cnxid)) {
+                        cnx->path[0]->remote_cnxid = ph.srce_cnx_id;
+                    } else if (picoquic_compare_connection_id(&cnx->path[0]->remote_cnxid, &ph.srce_cnx_id) != 0) {
+                        DBG_PRINTF("Error wrong srce cnxid (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
+                            cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int)ph.pn);
+                        ret = PICOQUIC_ERROR_UNEXPECTED_PACKET;
+                    }
+                    if (ret == 0) {
+                        if (packet_length < PICOQUIC_ENFORCED_INITIAL_MTU) {
+                            if (!cnx->did_receive_short_initial) {
+                                picoquic_log_app_message(cnx, "Received unpadded initial, length=%zu", packet_length);
+                            }
+                            cnx->did_receive_short_initial = 1;
+                        }
+                        if (cnx->client_mode == 0) {
+                            if (is_first_segment) {
+                                /* Account for the data received in handshake, but only
+                                 * count the packet once. Do not count it again if it is not
+                                 * the first segment in packet */
+                                cnx->initial_data_received += packet_length;
+                            }
+                            ret = picoquic_incoming_client_initial(&cnx, bytes, packet_length,
+                                addr_from, addr_to, if_index_to, &ph, current_time, new_context_created);
+                        }
+                        else {
+                            /* TODO: this really depends on the current receive epoch */
+                            ret = picoquic_incoming_server_initial(cnx, bytes, addr_to, if_index_to, &ph, current_time);
+                        }
+                    }
+                } else {
+                    DBG_PRINTF("Error detected (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
+                        cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int)ph.pn);
+                    ret = PICOQUIC_ERROR_DETECTED;
+                }
+                break;
+            case picoquic_packet_retry:
+                ret = picoquic_incoming_retry(cnx, bytes, &ph, current_time);
+                break;
+            case picoquic_packet_handshake:
+                if (cnx->client_mode)
+                {
+                    ret = picoquic_incoming_server_handshake(cnx, bytes, addr_to, if_index_to, &ph, current_time);
+                }
+                else
+                {
+                    ret = picoquic_incoming_client_handshake(cnx, bytes, &ph, current_time);
+                }
+                break;
+            case picoquic_packet_0rtt_protected:
+                if (is_first_segment) {
+                    /* Account for the data received in handshake, but only
+                     * count the packet once. Do not count it again if it is not
+                     * the first segment in packet */
+                    cnx->initial_data_received += packet_length;
+                }
+                ret = picoquic_incoming_0rtt(cnx, bytes, &ph, current_time);
+                break;
+            case picoquic_packet_1rtt_protected:
+                ret = picoquic_incoming_encrypted(cnx, bytes, &ph, addr_from, addr_to, if_index_to, received_ecn, current_time);
+                break;
+            default:
+                /* Packet type error. Log and ignore */
+                DBG_PRINTF("Unexpected packet type (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
+                    cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int) ph.pn);
+                ret = PICOQUIC_ERROR_DETECTED;
+                break;
+            }
+        }
+    } else if (ret == PICOQUIC_ERROR_STATELESS_RESET) {
+        ret = picoquic_incoming_stateless_reset(cnx);
+    }
+    else if (ret == PICOQUIC_ERROR_AEAD_CHECK &&
+        ph.ptype == picoquic_packet_handshake &&
+        cnx != NULL &&
+        (cnx->cnx_state == picoquic_state_client_init_sent || cnx->cnx_state == picoquic_state_client_init_resent))
+    {
+        /* Indicates that the server probably sent initial and handshake but initial was lost */
+        if (cnx->pkt_ctx[picoquic_packet_context_initial].retransmit_oldest != NULL &&
+            cnx->pkt_ctx[picoquic_packet_context_initial].nb_retransmit == 0) {
+            /* Reset the retransmit timer to start retransmission immediately */
+            cnx->path[0]->retransmit_timer = current_time -
+                cnx->pkt_ctx[picoquic_packet_context_initial].retransmit_oldest->send_time;
+        }
+    }
+
+    if (ret == 0) {
+        if (cnx != NULL && cnx->cnx_state != picoquic_state_disconnected &&
+            ph.ptype != picoquic_packet_version_negotiation) {
+            cnx->nb_packets_received++;
+            /* Mark the sequence number as received */
+            ret = picoquic_record_pn_received(cnx, ph.pc, ph.pn64, receive_time);
+            /* Perform ECN accounting */
+            picoquic_ecn_accounting(cnx, received_ecn, ph.pc);
+        }
+        if (cnx != NULL) {
+            picoquic_reinsert_by_wake_time(cnx->quic, cnx, current_time);
+        }
+    } else if (ret == PICOQUIC_ERROR_DUPLICATE) {
+        /* Bad packets are dropped silently, but duplicates should be acknowledged */
+        if (cnx != NULL) {
+            picoquic_set_ack_needed(cnx, current_time, ph.pc);
+        }
+        ret = -1;
+    } else if (ret == PICOQUIC_ERROR_AEAD_CHECK || ret == PICOQUIC_ERROR_INITIAL_TOO_SHORT ||
+        ret == PICOQUIC_ERROR_INITIAL_CID_TOO_SHORT ||
+        ret == PICOQUIC_ERROR_UNEXPECTED_PACKET || 
+        ret == PICOQUIC_ERROR_CNXID_CHECK || 
+        ret == PICOQUIC_ERROR_RETRY || ret == PICOQUIC_ERROR_DETECTED ||
+        ret == PICOQUIC_ERROR_CONNECTION_DELETED ||
+        ret == PICOQUIC_ERROR_CNXID_SEGMENT ||
+        ret == PICOQUIC_ERROR_VERSION_NOT_SUPPORTED ||
+        ret == PICOQUIC_ERROR_AEAD_NOT_READY) {
+        /* Bad packets are dropped silently */
+        if (ret == PICOQUIC_ERROR_AEAD_CHECK ||
+            ret == PICOQUIC_ERROR_AEAD_NOT_READY ||
+            ret == PICOQUIC_ERROR_VERSION_NOT_SUPPORTED) {
+            ret = 0;
+        }
+        else {
+            ret = -1;
+        }
+        if (cnx != NULL) {
+            picoquic_reinsert_by_wake_time(cnx->quic, cnx, current_time);
+        }
+    } else if (ret == 1) {
+        /* wonder what happened ! */
+        DBG_PRINTF("Packet (%d) get ret=1, t: %d, e: %d, pc: %d, pn: %d, l: %zu\n",
+            (cnx == NULL) ? -1 : cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int)ph.pn, length);
+        ret = -1;
+    }
+    else if (ret != 0) {
+        DBG_PRINTF("Packet (%d) error, t: %d, e: %d, pc: %d, pn: %d, l: %zu, ret : 0x%x\n",
+            (cnx == NULL) ? -1 : cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int)ph.pn, length, ret);
+        ret = -1;
+    }
+
+    return ret;
+}
 
 int picoquic_incoming_packet(
     picoquic_quic_t* quic,
@@ -2131,6 +2388,7 @@ int picoquic_incoming_packet(
     unsigned char received_ecn,
     uint64_t current_time)
 {
+    // printf("picoquic receive packets!\n");
     size_t consumed_index = 0;
     int ret = 0;
     picoquic_connection_id_t previous_destid = picoquic_null_connection_id;
@@ -2157,6 +2415,46 @@ int picoquic_incoming_packet(
 
     return ret;
 }
+
+int picoquic_incoming_packet_master(
+    picoquic_quic_t* quic,
+    picohash_table* cnx_id_table,
+    uint8_t* bytes,
+    size_t packet_length,
+    struct sockaddr* addr_from,
+    struct sockaddr* addr_to,
+    int if_index_to,
+    unsigned char received_ecn,
+    uint64_t current_time)
+{
+    // printf("picoquic receive packets!\n");
+    size_t consumed_index = 0;
+    int ret = 0;
+    picoquic_connection_id_t previous_destid = picoquic_null_connection_id;
+
+
+    while (consumed_index < packet_length) {
+        size_t consumed = 0;
+
+        ret = picoquic_incoming_segment_master(quic, cnx_id_table, bytes + consumed_index, 
+            packet_length - consumed_index, packet_length,
+            &consumed, addr_from, addr_to, if_index_to, received_ecn, current_time, current_time, &previous_destid);
+
+        if (ret == 0) {
+            consumed_index += consumed;
+            if (consumed == 0) {
+                DBG_PRINTF("%s", "Receive bug, ret = 0 && consumed = 0\n");
+                break;
+            }
+        } else {
+            ret = 0;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 
 /* Processing of stashed packets after acquiring encryption context */
 void picoquic_process_sooner_packets(picoquic_cnx_t* cnx, uint64_t current_time)

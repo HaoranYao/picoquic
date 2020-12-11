@@ -4,16 +4,25 @@
 CMakeFiles/picoquic_sample.dir/sample/sample.c.o
  /home/haoran/quic_bak/picoquic/sample/picoquic_sample.h
  /home/haoran/quic_bak/picoquic/sample/sample.c
+ loglib/autoqlog.h
+ picoquic/picohash.h
  picoquic/picoquic.h
+ picoquic/picoquic_internal.h
+ picoquic/picoquic_packet_loop.h
+ picoquic/picoquic_utils.h
  picoquic/picosocks.h
+ picoquic/picosplay.h
 CMakeFiles/picoquic_sample.dir/sample/sample_client.c.o
  /home/haoran/quic_bak/picoquic/sample/picoquic_sample.h
  /home/haoran/quic_bak/picoquic/sample/sample_client.c
  loglib/autoqlog.h
+ picoquic/picohash.h
  picoquic/picoquic.h
+ picoquic/picoquic_internal.h
  picoquic/picoquic_packet_loop.h
  picoquic/picoquic_utils.h
  picoquic/picosocks.h
+ picoquic/picosplay.h
 CMakeFiles/picoquic_sample.dir/sample/sample_server.c.o
  /home/haoran/quic_bak/picoquic/sample/picoquic_sample.h
  /home/haoran/quic_bak/picoquic/sample/sample_server.c

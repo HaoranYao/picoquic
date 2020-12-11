@@ -101,11 +101,11 @@ CMakeFiles/picoquic-core.dir/picoquic/picosocks.c.o: picoquic/picoquic.h
 CMakeFiles/picoquic-core.dir/picoquic/picosocks.c.o: picoquic/picoquic_utils.h
 CMakeFiles/picoquic-core.dir/picoquic/picosocks.c.o: picoquic/picosocks.c
 CMakeFiles/picoquic-core.dir/picoquic/picosocks.c.o: picoquic/picosocks.h
+CMakeFiles/picoquic-core.dir/picoquic/picosocks.c.o: picoquic/picohash.h
 
 CMakeFiles/picoquic-core.dir/picoquic/picosplay.c.o: picoquic/picosplay.c
 CMakeFiles/picoquic-core.dir/picoquic/picosplay.c.o: picoquic/picosplay.h
 
-CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/picohash.h
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/picoquic.h
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/picoquic_internal.h
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/picoquic_unified_log.h
@@ -114,6 +114,7 @@ CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/picosplay.h
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/quicctx.c
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/tls_api.h
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: /home/haoran/quic_bak/picotls/include/picotls.h
+CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/picohash.h
 CMakeFiles/picoquic-core.dir/picoquic/quicctx.c.o: picoquic/wincompat.h
 
 CMakeFiles/picoquic-core.dir/picoquic/sacks.c.o: picoquic/picohash.h
@@ -139,7 +140,6 @@ CMakeFiles/picoquic-core.dir/picoquic/sim_link.c.o: picoquic/picoquic_utils.h
 CMakeFiles/picoquic-core.dir/picoquic/sim_link.c.o: picoquic/picosplay.h
 CMakeFiles/picoquic-core.dir/picoquic/sim_link.c.o: picoquic/sim_link.c
 
-CMakeFiles/picoquic-core.dir/picoquic/sockloop.c.o: picoquic/picohash.h
 CMakeFiles/picoquic-core.dir/picoquic/sockloop.c.o: picoquic/picoquic.h
 CMakeFiles/picoquic-core.dir/picoquic/sockloop.c.o: picoquic/picoquic_internal.h
 CMakeFiles/picoquic-core.dir/picoquic/sockloop.c.o: picoquic/picoquic_packet_loop.h
@@ -148,6 +148,7 @@ CMakeFiles/picoquic-core.dir/picoquic/sockloop.c.o: picoquic/picoquic_utils.h
 CMakeFiles/picoquic-core.dir/picoquic/sockloop.c.o: picoquic/picosocks.h
 CMakeFiles/picoquic-core.dir/picoquic/sockloop.c.o: picoquic/picosplay.h
 CMakeFiles/picoquic-core.dir/picoquic/sockloop.c.o: picoquic/sockloop.c
+CMakeFiles/picoquic-core.dir/picoquic/sockloop.c.o: picoquic/picohash.h
 
 CMakeFiles/picoquic-core.dir/picoquic/spinbit.c.o: picoquic/picohash.h
 CMakeFiles/picoquic-core.dir/picoquic/spinbit.c.o: picoquic/picoquic.h
@@ -194,7 +195,6 @@ CMakeFiles/picoquic-core.dir/picoquic/transport.c.o: picoquic/picosplay.h
 CMakeFiles/picoquic-core.dir/picoquic/transport.c.o: picoquic/tls_api.h
 CMakeFiles/picoquic-core.dir/picoquic/transport.c.o: picoquic/transport.c
 
-CMakeFiles/picoquic-core.dir/picoquic/unified_log.c.o: picoquic/picohash.h
 CMakeFiles/picoquic-core.dir/picoquic/unified_log.c.o: picoquic/picoquic.h
 CMakeFiles/picoquic-core.dir/picoquic/unified_log.c.o: picoquic/picoquic_internal.h
 CMakeFiles/picoquic-core.dir/picoquic/unified_log.c.o: picoquic/picoquic_unified_log.h
@@ -202,6 +202,7 @@ CMakeFiles/picoquic-core.dir/picoquic/unified_log.c.o: picoquic/picoquic_utils.h
 CMakeFiles/picoquic-core.dir/picoquic/unified_log.c.o: picoquic/picosplay.h
 CMakeFiles/picoquic-core.dir/picoquic/unified_log.c.o: picoquic/tls_api.h
 CMakeFiles/picoquic-core.dir/picoquic/unified_log.c.o: picoquic/unified_log.c
+CMakeFiles/picoquic-core.dir/picoquic/unified_log.c.o: picoquic/picohash.h
 
 CMakeFiles/picoquic-core.dir/picoquic/util.c.o: picoquic/picohash.h
 CMakeFiles/picoquic-core.dir/picoquic/util.c.o: picoquic/picoquic.h

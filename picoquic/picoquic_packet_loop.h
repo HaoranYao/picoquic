@@ -24,6 +24,7 @@
 
 #include "picosocks.h"
 #include "picoquic.h"
+#include "picohash.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,6 +50,16 @@ int picoquic_packet_loop(picoquic_quic_t* quic,
 
 int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
     picoquic_quic_t* quic_back,
+    int* migration_flag,
+    int local_port,
+    int local_af,
+    int dest_if,
+    picoquic_packet_loop_cb_fn loop_callback,
+    void* loop_callback_ctx);
+
+int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
+    picoquic_quic_t* quic_back,
+    picohash_table* cnx_id_table,
     int* migration_flag,
     int local_port,
     int local_af,

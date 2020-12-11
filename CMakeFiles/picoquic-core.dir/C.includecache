@@ -171,6 +171,8 @@ sys/socket.h
 -
 sys/types.h
 -
+picohash.h
+-
 unistd.h
 -
 
@@ -217,6 +219,8 @@ picosocks.h
 /home/haoran/quic_bak/picoquic/picoquic/picosocks.h
 picoquic.h
 /home/haoran/quic_bak/picoquic/picoquic/picoquic.h
+picohash.h
+/home/haoran/quic_bak/picoquic/picoquic/picohash.h
 
 /home/haoran/quic_bak/picoquic/picoquic/picoquic_unified_log.h
 picoquic.h
@@ -571,6 +575,12 @@ openssl/opensslconf.h
 -
 ../picotls.h
 /home/haoran/quic_bak/picotls/include/picotls.h
+
+picoquic/picohash.h
+stddef.h
+-
+stdint.h
+-
 
 picoquic/wincompat.h
 stdint.h

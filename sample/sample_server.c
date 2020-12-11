@@ -38,15 +38,9 @@
  * completes, the code saves the log as a file named after the Initial Connection
  * ID (in hexa), with the suffix ".server.qlog".
  */
-#include "picoquic_internal.h"
-#include <stdint.h>
-#include <stdio.h>
-#include <picoquic.h>
-#include <picosocks.h>
-#include <picoquic_utils.h>
-#include <autoqlog.h>
+
 #include "picoquic_sample.h"
-#include "picoquic_packet_loop.h"
+
 
 /* Server context and callback management:
  *
@@ -215,6 +209,20 @@ int sample_server_open_stream_for_migration(sample_server_migration_ctx_t* serve
     }
 
     return ret;
+}
+
+uint64_t picoquic_cnx_id_hash(const void* key)
+{
+    const picoquic_cnx_id_key_t* cid = (const picoquic_cnx_id_key_t*)key;
+    return picoquic_connection_id_hash(&cid->cnx_id);
+}
+
+int picoquic_cnx_id_compare(const void* key1, const void* key2)
+{
+    const picoquic_cnx_id_key_t* cid1 = (const picoquic_cnx_id_key_t*)key1;
+    const picoquic_cnx_id_key_t* cid2 = (const picoquic_cnx_id_key_t*)key2;
+
+    return picoquic_compare_connection_id(&cid1->cnx_id, &cid2->cnx_id);
 }
 
 void sample_server_delete_stream_context(sample_server_ctx_t* server_ctx, sample_server_stream_ctx_t* stream_ctx)
@@ -714,6 +722,7 @@ int picoquic_sample_server(int server_port, const char* server_cert, const char*
     /* And finish. */
     printf("Server exit, ret = %d\n", ret);
 
+    
     /* Clean up */
     if (quic != NULL) {
         picoquic_free(quic);
@@ -795,8 +804,10 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     }
     /* Wait for packets */
     if (ret == 0) {
+        picohash_table* cnx_id_table = picohash_create((size_t)8 * 4, picoquic_cnx_id_hash, picoquic_cnx_id_compare);
+        // free(cnx_id_table);
         // ret = picoquic_packet_loop(quic, server_port, 0, 0, NULL, NULL);
-        ret = picoquic_packet_loop_with_migration(quic, quic_back, &(default_migration_context.migration_flag),server_port, 0, 0, NULL, NULL);
+        ret = picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, &(default_migration_context.migration_flag),server_port, 0, 0, NULL, NULL);
         // if migration finished we should use picoquic_packet_loop(q_back......)
     }
 

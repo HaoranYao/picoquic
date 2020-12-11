@@ -7,6 +7,22 @@
 #IncludeRegexTransform: 
 
 /home/haoran/quic_bak/picoquic/sample/picoquic_sample.h
+picoquic_internal.h
+/home/haoran/quic_bak/picoquic/sample/picoquic_internal.h
+stdint.h
+-
+stdio.h
+-
+picoquic.h
+-
+picosocks.h
+-
+picoquic_utils.h
+-
+autoqlog.h
+-
+picoquic_packet_loop.h
+/home/haoran/quic_bak/picoquic/sample/picoquic_packet_loop.h
 
 /home/haoran/quic_bak/picoquic/sample/sample.c
 stdio.h
@@ -39,24 +55,8 @@ picoquic_sample.h
 /home/haoran/quic_bak/picoquic/sample/picoquic_sample.h
 
 /home/haoran/quic_bak/picoquic/sample/sample_server.c
-picoquic_internal.h
-/home/haoran/quic_bak/picoquic/sample/picoquic_internal.h
-stdint.h
--
-stdio.h
--
-picoquic.h
--
-picosocks.h
--
-picoquic_utils.h
--
-autoqlog.h
--
 picoquic_sample.h
 /home/haoran/quic_bak/picoquic/sample/picoquic_sample.h
-picoquic_packet_loop.h
-/home/haoran/quic_bak/picoquic/sample/picoquic_packet_loop.h
 
 loglib/autoqlog.h
 picoquic.h
@@ -84,6 +84,8 @@ netinet/in.h
 sys/socket.h
 -
 sys/types.h
+-
+picohash.h
 -
 unistd.h
 -
@@ -121,6 +123,8 @@ picosocks.h
 picoquic/picosocks.h
 picoquic.h
 picoquic/picoquic.h
+picohash.h
+picoquic/picohash.h
 
 picoquic/picoquic_utils.h
 stdio.h

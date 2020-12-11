@@ -21,6 +21,15 @@
 
 #ifndef PICOQUIC_SAMPLE_H
 #define PICOQUIC_SAMPLE_H
+
+#include "picoquic_internal.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <picoquic.h>
+#include <picosocks.h>
+#include <picoquic_utils.h>
+#include <autoqlog.h>
+#include "picoquic_packet_loop.h"
 /* Header file for the picoquic sample project. 
  * It contains the definitions common to client and server */
 
@@ -45,5 +54,16 @@ int picoquic_sample_client(char const* server_name, int server_port, char const*
 int picoquic_sample_server(int server_port, const char* pem_cert, const char* pem_key, const char * default_dir);
 
 int picoquic_sample_server_test_migration(int server_port, const char* pem_cert, const char* pem_key, const char * default_dir);
+
+typedef struct st_picoquic_cnx_id_key_t {
+    picoquic_connection_id_t cnx_id;
+    picoquic_cnx_t* cnx;
+    picoquic_local_cnxid_t* l_cid;
+    struct st_picoquic_cnx_id_key_t* next_cnx_id;
+} picoquic_cnx_id_key_t;
+
+uint64_t picoquic_cnx_id_hash(const void* key);
+
+int picoquic_cnx_id_compare(const void* key1, const void* key2);
 
 #endif

@@ -3,6 +3,7 @@
 
 CMakeFiles/picohttp_ct.dir/picohttp_t/picohttp_t.c.o
  /home/haoran/quic_bak/picoquic/picohttp_t/picohttp_t.c
+ picoquic/picohash.h
  picoquic/picoquic.h
  picoquic/picoquic_utils.h
  picoquictest/picoquictest.h
@@ -141,11 +142,13 @@ CMakeFiles/picohttp_ct.dir/picoquictest/skip_frame_test.c.o
  picoquic/tls_api.h
 CMakeFiles/picohttp_ct.dir/picoquictest/socket_test.c.o
  /home/haoran/quic_bak/picoquic/picoquictest/socket_test.c
+ picoquic/picohash.h
  picoquic/picoquic.h
  picoquic/picoquic_utils.h
  picoquic/picosocks.h
 CMakeFiles/picohttp_ct.dir/picoquictest/splay_test.c.o
  /home/haoran/quic_bak/picoquic/picoquictest/splay_test.c
+ picoquic/picohash.h
  picoquic/picoquic.h
  picoquic/picoquic_utils.h
  picoquic/picosplay.h
