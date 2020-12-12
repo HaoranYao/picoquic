@@ -10,6 +10,7 @@ CMakeFiles/picolog_t.dir/picolog/picolog.c.o
  loglib/svg.h
  picoquic/bytestream.h
  picoquic/cidset.h
+ picoquic/hashmap.h
  picoquic/picohash.h
  picoquic/picoquic.h
  picoquic/picoquic_internal.h

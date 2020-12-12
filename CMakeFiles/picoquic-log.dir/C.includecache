@@ -146,6 +146,14 @@ picoquic/bytestream.h
 picoquic_internal.h
 picoquic/picoquic_internal.h
 
+picoquic/hashmap.h
+stdlib.h
+-
+string.h
+-
+nmmintrin.h
+-
+
 picoquic/picohash.h
 stddef.h
 -
@@ -173,6 +181,8 @@ picohash.h
 -
 unistd.h
 -
+hashmap.h
+picoquic/hashmap.h
 
 picoquic/picoquic_binlog.h
 stdio.h
@@ -211,6 +221,8 @@ unistd.h
 -
 sys/time.h
 -
+hashmap.h
+picoquic/hashmap.h
 
 picoquic/picoquic_utils.h
 stdio.h

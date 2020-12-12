@@ -72,6 +72,14 @@ picoquic_internal.h
 tls_api.h
 /home/haoran/quic_bak/picoquic/picoquic/tls_api.h
 
+/home/haoran/quic_bak/picoquic/picoquic/hashmap.h
+stdlib.h
+-
+string.h
+-
+nmmintrin.h
+-
+
 /home/haoran/quic_bak/picoquic/picoquic/intformat.c
 stdint.h
 -
@@ -175,6 +183,8 @@ picohash.h
 -
 unistd.h
 -
+hashmap.h
+/home/haoran/quic_bak/picoquic/picoquic/hashmap.h
 
 /home/haoran/quic_bak/picoquic/picoquic/picoquic_binlog.h
 stdio.h
@@ -213,6 +223,8 @@ unistd.h
 -
 sys/time.h
 -
+hashmap.h
+/home/haoran/quic_bak/picoquic/picoquic/hashmap.h
 
 /home/haoran/quic_bak/picoquic/picoquic/picoquic_packet_loop.h
 picosocks.h

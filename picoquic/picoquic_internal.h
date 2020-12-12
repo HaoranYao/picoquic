@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include "hashmap.h"
 
 #ifdef __cplusplus
 extern "C" {

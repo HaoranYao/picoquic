@@ -86,6 +86,14 @@ picoquic/picoquic_internal.h
 picohash.h
 picoquic/picohash.h
 
+picoquic/hashmap.h
+stdlib.h
+-
+string.h
+-
+nmmintrin.h
+-
+
 picoquic/picohash.h
 stddef.h
 -
@@ -113,6 +121,8 @@ picohash.h
 -
 unistd.h
 -
+hashmap.h
+picoquic/hashmap.h
 
 picoquic/picoquic_internal.h
 picohash.h
@@ -141,6 +151,8 @@ unistd.h
 -
 sys/time.h
 -
+hashmap.h
+picoquic/hashmap.h
 
 picoquic/picoquic_utils.h
 stdio.h

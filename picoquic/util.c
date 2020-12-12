@@ -320,6 +320,27 @@ int picoquic_compare_connection_id(const picoquic_connection_id_t * cnx_id1, con
 
     return ret;
 }
+char *uint64_to_string(uint64_t input)
+{
+    static char result[21] = "";
+    // Clear result from any leftover digits from previous function call.
+    memset(&result[0], 0, sizeof(result));
+    // temp is used as a temporary result storage to prevent sprintf bugs.
+    char temp[21] = "";
+    char c;
+    uint8_t base = 10;
+
+    while (input) 
+    {
+        int num = input % base;
+        input /= base;
+        c = '0' + num;
+
+        sprintf(temp, "%c%s", c, result);
+        strcpy(result, temp);
+    } 
+    return result;
+}
 
 /* Hash connection ids for picohash_table's */
 uint64_t picoquic_connection_id_hash(const picoquic_connection_id_t * cid)

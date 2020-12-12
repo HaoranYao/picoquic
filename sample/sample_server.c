@@ -747,6 +747,11 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     default_context.server_flag = 0;
 
     printf("Starting Picoquic Sample server on port %d\n", server_port);
+    struct hashmap_s hashmap;
+    if (0 != hashmap_create(32, &hashmap)) {
+        printf("create hashmap wrong!\n");
+    }
+    struct hashmap_s * cnx_id_table = &hashmap;
 
     current_time = picoquic_current_time();
     // create a back server here
@@ -804,7 +809,8 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     }
     /* Wait for packets */
     if (ret == 0) {
-        picohash_table* cnx_id_table = picohash_create((size_t)8 * 4, picoquic_cnx_id_hash, picoquic_cnx_id_compare);
+        
+        // picohash_table* cnx_id_table = picohash_create((size_t)8 * 4, picoquic_cnx_id_hash, picoquic_cnx_id_compare);
         // free(cnx_id_table);
         // ret = picoquic_packet_loop(quic, server_port, 0, 0, NULL, NULL);
         ret = picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, &(default_migration_context.migration_flag),server_port, 0, 0, NULL, NULL);

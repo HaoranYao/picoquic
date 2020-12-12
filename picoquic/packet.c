@@ -2130,7 +2130,7 @@ int picoquic_incoming_segment(
 }
 int picoquic_incoming_segment_master(
     picoquic_quic_t* quic,
-    picohash_table* cnx_id_table,
+    struct hashmap_s* cnx_id_table,
     uint8_t* bytes,
     size_t length,
     size_t packet_length,
@@ -2176,25 +2176,35 @@ int picoquic_incoming_segment_master(
         }
     }
 
-    if(cnx != NULL) {
-        picohash_item* item;
-        picoquic_cnx_id_key_t* key = (picoquic_cnx_id_key_t*)malloc(sizeof(picoquic_cnx_id_key_t));
+        // key->cnx_id = l_cid->cnx_id;
+        // key->cnx = cnx;
+        // key->l_cid = l_cid;
 
-        if (key == NULL) {
-            ret = -1;
-        } else {
-            key->cnx_id = cnx->local_cnxid_first->cnx_id;
-            key->cnx = cnx;
-            key->l_cid = cnx->local_cnxid_first;
-            key->next_cnx_id = NULL;
-            item = picohash_retrieve(cnx_id_table, key);
-            if (item != NULL) {
-                printf("FIND THE CNX\n");
+// uint64_t picoquic_cnx_id_hash(const void* key)
+// {
+//     const picoquic_cnx_id_key_t* cid = (const picoquic_cnx_id_key_t*)key;
+//     return picoquic_connection_id_hash(&cid->cnx_id);
+// }
+
+    if(cnx != NULL) {
+        // picohash_item* item;
+        // picoquic_cnx_id_key_t* key = (picoquic_cnx_id_key_t*)malloc(sizeof(picoquic_cnx_id_key_t));
+        uint64_t key = picoquic_connection_id_hash(&cnx->local_cnxid_first->cnx_id);
+        char* string_key = uint64_to_string(key); 
+        if (cnx_id_table != NULL) {
+            void* const element = hashmap_get(cnx_id_table, string_key, strlen(string_key));
+            if (NULL == element) {
+                printf("NEW CONNECTION FIND! ADD IT TO HASH TABLE!\n");
+                hashmap_put(cnx_id_table, string_key, strlen(string_key), "2");
             } else {
-                printf("ADD this connection to table\n");
-                ret = picohash_insert(cnx_id_table, key);
+                printf("FIND THE CONNECTION!\n");
             }
+        } else
+        {
+            printf("table is NULL\n");
         }
+        
+
     }
     /* Store packet if received in advance of encryption keys */
     if (ret == PICOQUIC_ERROR_AEAD_NOT_READY &&
@@ -2418,7 +2428,7 @@ int picoquic_incoming_packet(
 
 int picoquic_incoming_packet_master(
     picoquic_quic_t* quic,
-    picohash_table* cnx_id_table,
+    struct hashmap_s* cnx_id_table,
     uint8_t* bytes,
     size_t packet_length,
     struct sockaddr* addr_from,

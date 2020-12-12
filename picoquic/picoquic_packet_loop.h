@@ -59,7 +59,7 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
 
 int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     picoquic_quic_t* quic_back,
-    picohash_table* cnx_id_table,
+    struct hashmap_s* cnx_id_table,
     int* migration_flag,
     int local_port,
     int local_af,

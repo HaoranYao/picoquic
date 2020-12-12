@@ -30,6 +30,14 @@ picoquictest_internal.h
 picoquic_internal.h
 /home/haoran/quic_bak/picoquic/picoquictest/picoquic_internal.h
 
+picoquic/hashmap.h
+stdlib.h
+-
+string.h
+-
+nmmintrin.h
+-
+
 picoquic/picohash.h
 stddef.h
 -
@@ -57,6 +65,8 @@ picohash.h
 -
 unistd.h
 -
+hashmap.h
+picoquic/hashmap.h
 
 picoquic/picoquic_internal.h
 picohash.h
@@ -85,6 +95,8 @@ unistd.h
 -
 sys/time.h
 -
+hashmap.h
+picoquic/hashmap.h
 
 picoquic/picoquic_utils.h
 stdio.h

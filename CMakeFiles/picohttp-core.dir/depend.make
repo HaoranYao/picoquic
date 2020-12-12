@@ -4,6 +4,7 @@
 CMakeFiles/picohttp-core.dir/picohttp/democlient.c.o: picohttp/democlient.c
 CMakeFiles/picohttp-core.dir/picohttp/democlient.c.o: picohttp/democlient.h
 CMakeFiles/picohttp-core.dir/picohttp/democlient.c.o: picohttp/h3zero.h
+CMakeFiles/picohttp-core.dir/picohttp/democlient.c.o: picoquic/hashmap.h
 CMakeFiles/picohttp-core.dir/picohttp/democlient.c.o: picoquic/picohash.h
 CMakeFiles/picohttp-core.dir/picohttp/democlient.c.o: picoquic/picoquic.h
 CMakeFiles/picohttp-core.dir/picohttp/democlient.c.o: picoquic/picoquic_internal.h
@@ -16,6 +17,7 @@ CMakeFiles/picohttp-core.dir/picohttp/demoserver.c.o: picohttp/demoserver.h
 CMakeFiles/picohttp-core.dir/picohttp/demoserver.c.o: picohttp/h3zero.h
 CMakeFiles/picohttp-core.dir/picohttp/demoserver.c.o: picohttp/siduck.h
 CMakeFiles/picohttp-core.dir/picohttp/demoserver.c.o: /home/haoran/quic_bak/picotls/include/picotls.h
+CMakeFiles/picohttp-core.dir/picohttp/demoserver.c.o: picoquic/hashmap.h
 CMakeFiles/picohttp-core.dir/picohttp/demoserver.c.o: picoquic/picohash.h
 CMakeFiles/picohttp-core.dir/picohttp/demoserver.c.o: picoquic/picoquic.h
 CMakeFiles/picohttp-core.dir/picohttp/demoserver.c.o: picoquic/picoquic_internal.h
@@ -29,6 +31,7 @@ CMakeFiles/picohttp-core.dir/picohttp/h3zero.c.o: picohttp/h3zero.h
 
 CMakeFiles/picohttp-core.dir/picohttp/siduck.c.o: picohttp/siduck.c
 CMakeFiles/picohttp-core.dir/picohttp/siduck.c.o: picohttp/siduck.h
+CMakeFiles/picohttp-core.dir/picohttp/siduck.c.o: picoquic/hashmap.h
 CMakeFiles/picohttp-core.dir/picohttp/siduck.c.o: picoquic/picohash.h
 CMakeFiles/picohttp-core.dir/picohttp/siduck.c.o: picoquic/picoquic.h
 CMakeFiles/picohttp-core.dir/picohttp/siduck.c.o: picoquic/picoquic_internal.h

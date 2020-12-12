@@ -12,6 +12,7 @@ CMakeFiles/picoquicdemo.dir/picoquicfirst/picoquicdemo.c.o
  picohttp/demoserver.h
  picohttp/h3zero.h
  picohttp/siduck.h
+ picoquic/hashmap.h
  picoquic/picohash.h
  picoquic/picoquic.h
  picoquic/picoquic_binlog.h

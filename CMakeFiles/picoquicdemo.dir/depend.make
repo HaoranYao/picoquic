@@ -11,6 +11,7 @@ CMakeFiles/picoquicdemo.dir/picoquicfirst/picoquicdemo.c.o: picohttp/democlient.
 CMakeFiles/picoquicdemo.dir/picoquicfirst/picoquicdemo.c.o: picohttp/demoserver.h
 CMakeFiles/picoquicdemo.dir/picoquicfirst/picoquicdemo.c.o: picohttp/h3zero.h
 CMakeFiles/picoquicdemo.dir/picoquicfirst/picoquicdemo.c.o: picohttp/siduck.h
+CMakeFiles/picoquicdemo.dir/picoquicfirst/picoquicdemo.c.o: picoquic/hashmap.h
 CMakeFiles/picoquicdemo.dir/picoquicfirst/picoquicdemo.c.o: picoquic/picohash.h
 CMakeFiles/picoquicdemo.dir/picoquicfirst/picoquicdemo.c.o: picoquic/picoquic.h
 CMakeFiles/picoquicdemo.dir/picoquicfirst/picoquicdemo.c.o: picoquic/picoquic_binlog.h

@@ -83,6 +83,7 @@ extern const picoquic_connection_id_t picoquic_null_connection_id;
 uint8_t picoquic_format_connection_id(uint8_t* bytes, size_t bytes_max, picoquic_connection_id_t cnx_id);
 uint8_t picoquic_parse_connection_id(const uint8_t* bytes, uint8_t len, picoquic_connection_id_t *cnx_id);
 int picoquic_is_connection_id_null(const picoquic_connection_id_t * cnx_id);
+char *uint64_to_string(uint64_t input);
 int picoquic_compare_connection_id(const picoquic_connection_id_t * cnx_id1, const picoquic_connection_id_t * cnx_id2);
 uint64_t picoquic_connection_id_hash(const picoquic_connection_id_t * cid);
 uint64_t picoquic_val64_connection_id(picoquic_connection_id_t cnx_id);
