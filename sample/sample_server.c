@@ -746,6 +746,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     // int trans_buffer1 = 0;
     pthread_mutex_t buffer_mutex_global = PTHREAD_MUTEX_INITIALIZER;
     pthread_cond_t nonEmpty_global  = PTHREAD_COND_INITIALIZER;
+    
     int* trans_flag = malloc(sizeof(int));
     int* trans_bytes = malloc(sizeof(int));
     uint8_t* trans_buffer = malloc(1536 * sizeof(uint8_t));
@@ -905,10 +906,10 @@ void * master_quic(void * master_para)
     {
         printf("master\n");
         /* lock the variable */
-        // pthread_mutex_lock(&buffer_mutex);
+        // pthread_mutex_lock(buffer_mutex);
         picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, trans_flag, trans_bytes ,trans_buffer ,trans_received_ecn,nonEmpty ,buffer_mutex,server_port, 0, 0, NULL, NULL);
         /*unlock the variable*/
-        // pthread_mutex_unlock(&buffer_mutex);
+        // pthread_mutex_unlock(buffer_mutex);
     }
 }
 

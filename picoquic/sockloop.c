@@ -118,7 +118,7 @@ int picoquic_packet_loop_open_sockets(int local_port, int local_af, SOCKET_TYPE 
         DBG_PRINTF("Cannot open socket(AF=%d), unsupported AF\n", local_af);
         nb_sockets = 0;
     }
-
+        // printf("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC%d\n", nb_sockets);
     for (int i = 0; i < nb_sockets; i++) {
         int recv_set = 0;
         int send_set = 0;
@@ -127,6 +127,7 @@ int picoquic_packet_loop_open_sockets(int local_port, int local_af, SOCKET_TYPE 
             picoquic_socket_set_ecn_options(s_socket[i], sock_af[i], &recv_set, &send_set) != 0 ||
             picoquic_socket_set_pkt_info(s_socket[i], sock_af[i]) != 0 ||
             (local_port != 0 && picoquic_bind_to_port(s_socket[i], sock_af[i], local_port) != 0)) {
+                
             DBG_PRINTF("Cannot set socket (af=%d, port = %d)\n", sock_af[i], local_port);
             for (int j = 0; j < i; j++) {
                 if (s_socket[i] != INVALID_SOCKET) {
@@ -138,7 +139,7 @@ int picoquic_packet_loop_open_sockets(int local_port, int local_af, SOCKET_TYPE 
             break;
         }
     }
-
+    
     return nb_sockets;
 }
 
@@ -404,6 +405,22 @@ int picoquic_packet_loop(picoquic_quic_t* quic,
 }
 
 
+
+// int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
+//     picoquic_quic_t* quic_back,
+//     struct hashmap_s* cnx_id_table,
+//     int* trans_flag,
+//     int* trans_buffer,
+//     // pthread_cond_t nonEmpty,
+//     int local_port,
+//     int local_af,
+//     int dest_if,
+//     picoquic_packet_loop_cb_fn loop_callback,
+//     void* loop_callback_ctx)
+// {
+
+
+
 int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     picoquic_quic_t* quic_back,
     struct hashmap_s* cnx_id_table,
@@ -419,7 +436,6 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     picoquic_packet_loop_cb_fn loop_callback,
     void* loop_callback_ctx)
 {
-    // printf("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM\n");
     int ret = 0;
     uint64_t current_time = picoquic_get_quic_time(quic);
     int64_t delay_max = 10000000;
@@ -448,7 +464,6 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
 
     if ((nb_sockets = picoquic_packet_loop_open_sockets(local_port, local_af, s_socket, sock_af, PICOQUIC_PACKET_LOOP_SOCKETS_MAX)) == 0) {
         ret = PICOQUIC_ERROR_UNEXPECTED_ERROR;
-        
     }
     else if (loop_callback != NULL) {
         ret = loop_callback(quic, picoquic_packet_loop_ready, loop_callback_ctx);
@@ -764,12 +779,12 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
 #endif
     memset(sock_af, 0, sizeof(sock_af));
 
-    if ((nb_sockets = picoquic_packet_loop_open_sockets(local_port, local_af, s_socket, sock_af, PICOQUIC_PACKET_LOOP_SOCKETS_MAX)) == 0) {
-        ret = PICOQUIC_ERROR_UNEXPECTED_ERROR;
-    }
-    else if (loop_callback != NULL) {
-        ret = loop_callback(quic, picoquic_packet_loop_ready, loop_callback_ctx);
-    }
+    // if ((nb_sockets = picoquic_packet_loop_open_sockets(local_port, local_af, s_socket, sock_af, PICOQUIC_PACKET_LOOP_SOCKETS_MAX)) == 0) {
+    //     ret = PICOQUIC_ERROR_UNEXPECTED_ERROR;
+    // }
+    // else if (loop_callback != NULL) {
+    //     ret = loop_callback(quic, picoquic_packet_loop_ready, loop_callback_ctx);
+    // }
 
     /* Wait for packets */
     /* TODO: add stopping condition, was && (!just_once || !connection_done) */
