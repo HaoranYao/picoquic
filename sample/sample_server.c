@@ -61,6 +61,9 @@
  * The server side callback is a large switch statement, with one entry
  * for each of the call back events.
  */
+pthread_mutex_t buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t nonEmpty  = PTHREAD_COND_INITIALIZER;
+// pthread_cond_t full  = PTHREAD_COND_INITIALIZER;
 sample_server_stream_ctx_t * sample_server_create_stream_context(sample_server_ctx_t* server_ctx, uint64_t stream_id)
 {
     sample_server_stream_ctx_t* stream_ctx = (sample_server_stream_ctx_t*)malloc(sizeof(sample_server_stream_ctx_t));
@@ -745,6 +748,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
 
     int* trans_flag = malloc(sizeof(int));
     int* trans_buffer = malloc(sizeof(int));
+
     default_context.default_dir = default_dir;
     default_context.default_dir_len = strlen(default_dir);
     default_context.migration_flag = 0;
@@ -817,8 +821,44 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         // picohash_table* cnx_id_table = picohash_create((size_t)8 * 4, picoquic_cnx_id_hash, picoquic_cnx_id_compare);
         // free(cnx_id_table);
         // ret = picoquic_packet_loop(quic, server_port, 0, 0, NULL, NULL);
-        ret = picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, trans_flag, trans_buffer ,server_port, 0, 0, NULL, NULL);
+        // ret = picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, trans_flag, trans_buffer ,nonEmpty ,server_port, 0, 0, NULL, NULL);
         // if migration finished we should use picoquic_packet_loop(q_back......)
+        pthread_t thread[2];
+
+        // strcpy(source,"hello world!");
+        // buflen = strlen(source);
+        /* create 2 threads*/
+        /*
+        pthread_create(&thread[2], NULL, (void *)watch, &thread_id[2]);
+        */
+        /* create one consumer and one producer */
+        master_thread_para_t* master_para = malloc(sizeof(master_thread_para_t));
+        master_para->quic = quic;
+        master_para->quic_back = quic_back;
+        master_para->cnx_id_table = cnx_id_table;
+        master_para->trans_flag = trans_flag;
+        master_para->trans_buffer = trans_buffer;
+        master_para->nonEmpty = nonEmpty;
+        master_para->server_port = server_port;
+
+        slave_thread_para_t* slave_para = malloc(sizeof(slave_thread_para_t));
+        slave_para->quic = quic_back;
+        slave_para->cnx_id_table = cnx_id_table;
+        slave_para->trans_flag = trans_flag;
+        slave_para->trans_buffer = trans_buffer;
+        slave_para->nonEmpty = nonEmpty;
+        slave_para->buffer_mutex = buffer_mutex;
+        slave_para->server_port = server_port;
+
+        pthread_create(&thread[0], NULL, (void *)slave_quic, slave_para);
+        pthread_create(&thread[1], NULL, (void *)master_quic, master_para);
+        // pthread_create(&thread[2], NULL, (void *)producer, &thread_id[2]);
+
+        for(int i = 0; i<2 ; i++)
+        {
+            printf("#######################thread_join!\n");
+            pthread_join(thread[i], NULL);
+        }
     }
 
     /* And finish. */
@@ -835,32 +875,53 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     return ret;
 }
 
-// void * master_quic(int *id)
-// {
 
-//   while (i < MAX)
-//     {
-//       /* lock the variable */
-//       pthread_mutex_lock(&count_mutex);
-//       /* wait for the buffer to have space */
-//       /* pthread_cond_wait(&full, &count_mutex);*/
-//       strcpy(buffer,"");
-//       buffer[wCount] = source[wCount%buflen];
-//       printf("%d produced :%c: by  :%d:\n",i, buffer[wCount], *id);
-//       fflush(stdout);
-//       wCount = (wCount + 1) % BUFLEN;
-//       i ++;
-//       /* for the condition notify the thread */
-//       pthread_cond_signal(&nonEmpty);
-//       /*unlock the variable*/
-//       pthread_mutex_unlock(&count_mutex);
 
-//       if (i < (MAX - 2))     
-// 	/* Last sleep might leave the condition un-processed.
-// 	 * So we prohibit sleep towards the end
-// 	 */
-// 	if (rand()%100 >= 30)
-// 	  sleep(rand()%3);
+void * master_quic(void * master_para)
+{
+    master_thread_para_t* thread_para = (master_thread_para_t*) master_para;
+    picoquic_quic_t* quic = thread_para->quic;
+    picoquic_quic_t* quic_back = thread_para->quic_back;
+    struct hashmap_s* cnx_id_table = thread_para->cnx_id_table;
+    int* trans_flag = thread_para->trans_flag;
+    int* trans_buffer = thread_para->trans_buffer;
+    pthread_cond_t nonEmpty = thread_para->nonEmpty;
+    int server_port = thread_para->server_port;
+    // int ret = 0;
+    while (1)
+    {
+        /* lock the variable */
+        pthread_mutex_lock(&buffer_mutex);
+        picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, trans_flag, trans_buffer ,nonEmpty ,server_port, 0, 0, NULL, NULL);
+        /*unlock the variable*/
+        pthread_mutex_unlock(&buffer_mutex);
+    }
+}
 
-//     }
-// }
+
+
+void * slave_quic(void * slave_para)
+{
+    int first = 0;
+    slave_thread_para_t* thread_para = (slave_thread_para_t*) slave_para;
+    picoquic_quic_t* quic = thread_para->quic;
+    struct hashmap_s* cnx_id_table = thread_para->cnx_id_table;
+    int* trans_flag = thread_para->trans_flag;
+    int* trans_buffer = thread_para->trans_buffer;
+    pthread_cond_t nonEmpty = thread_para->nonEmpty;
+    pthread_mutex_t buffer_mutex = thread_para->buffer_mutex;
+    int server_port = thread_para->server_port;
+
+
+    // int ret = 0;
+    while (1 && first)
+    {
+        /* lock the variable */
+        pthread_mutex_lock(&buffer_mutex);
+        picoquic_packet_loop_with_migration_slave(quic, cnx_id_table, trans_flag, trans_buffer ,nonEmpty ,buffer_mutex ,server_port, 0, 0, NULL, NULL);
+        /*unlock the variable*/
+        pthread_mutex_unlock(&buffer_mutex);
+    }
+    first++;
+    return (void *)0;
+}

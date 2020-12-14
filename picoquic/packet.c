@@ -2200,7 +2200,7 @@ int picoquic_incoming_segment_master(
                 
                 // hashmap_put(cnx_id_table, string_key, strlen(string_key), "2");
             } else {
-                printf("FIND the connection in hashmap, set trans_flag to 1~\n");
+                printf("FIND the connection in hashmap, set trans_flag to 1!\n");
                 *trans_flag = 1;
             }
         } else

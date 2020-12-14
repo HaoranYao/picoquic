@@ -55,12 +55,36 @@ int picoquic_sample_server(int server_port, const char* pem_cert, const char* pe
 
 int picoquic_sample_server_test_migration(int server_port, const char* pem_cert, const char* pem_key, const char * default_dir);
 
+void * slave_quic(void * slave_para);
+void * master_quic(void * master_para);
 typedef struct st_picoquic_cnx_id_key_t {
     picoquic_connection_id_t cnx_id;
     picoquic_cnx_t* cnx;
     picoquic_local_cnxid_t* l_cid;
     struct st_picoquic_cnx_id_key_t* next_cnx_id;
 } picoquic_cnx_id_key_t;
+
+typedef struct master_thread_para
+{
+    picoquic_quic_t* quic;
+    picoquic_quic_t* quic_back;
+    struct hashmap_s* cnx_id_table;
+    int* trans_flag;
+    int* trans_buffer;
+    pthread_cond_t nonEmpty;
+    int server_port;
+}master_thread_para_t;
+
+typedef struct slave_thread_para
+{
+    picoquic_quic_t* quic;
+    struct hashmap_s* cnx_id_table;
+    int* trans_flag;
+    int* trans_buffer;
+    pthread_cond_t nonEmpty;
+    pthread_mutex_t buffer_mutex;
+    int server_port;
+}slave_thread_para_t;
 
 uint64_t picoquic_cnx_id_hash(const void* key);
 
