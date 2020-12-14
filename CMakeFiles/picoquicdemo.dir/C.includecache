@@ -119,6 +119,8 @@ picohash.h
 -
 unistd.h
 -
+pthread.h
+-
 hashmap.h
 picoquic/hashmap.h
 

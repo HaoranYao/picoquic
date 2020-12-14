@@ -740,7 +740,11 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     char const* qlog_dir = PICOQUIC_SAMPLE_SERVER_QLOG_DIR;
     uint64_t current_time = 0;
     sample_server_migration_ctx_t default_context = { 0 };
+    // int trans_flag1 = 0;
+    // int trans_buffer1 = 0;
 
+    int* trans_flag = malloc(sizeof(int));
+    int* trans_buffer = malloc(sizeof(int));
     default_context.default_dir = default_dir;
     default_context.default_dir_len = strlen(default_dir);
     default_context.migration_flag = 0;
@@ -813,7 +817,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         // picohash_table* cnx_id_table = picohash_create((size_t)8 * 4, picoquic_cnx_id_hash, picoquic_cnx_id_compare);
         // free(cnx_id_table);
         // ret = picoquic_packet_loop(quic, server_port, 0, 0, NULL, NULL);
-        ret = picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, &(default_migration_context.migration_flag),server_port, 0, 0, NULL, NULL);
+        ret = picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, trans_flag, trans_buffer ,server_port, 0, 0, NULL, NULL);
         // if migration finished we should use picoquic_packet_loop(q_back......)
     }
 

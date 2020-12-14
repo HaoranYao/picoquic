@@ -403,10 +403,13 @@ int picoquic_packet_loop(picoquic_quic_t* quic,
     return ret;
 }
 
+
 int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     picoquic_quic_t* quic_back,
     struct hashmap_s* cnx_id_table,
     int* trans_flag,
+    int* trans_buffer,
+    // pthread_cond_t nonEmpty,
     int local_port,
     int local_af,
     int dest_if,
@@ -515,14 +518,22 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 }
                 /* Submit the packet to the server */
                 // set the migration flag in this function
-                ret = picoquic_incoming_packet_master(quic, cnx_id_table,buffer,
+                ret = picoquic_incoming_packet_master(quic, cnx_id_table, trans_flag, buffer,
                     (size_t)bytes_recv, (struct sockaddr*) & addr_from,
                     (struct sockaddr*) & addr_to, if_index_to, received_ecn,
                     current_time);
                 // TODO: if migrated has happened, send it to the target server.
                 // 1. check the hashmap
                 // 2. if the connection is in this hashmap, then it should send it to the target server. So, set trans_flag to 1 and return.
-                // 3. if the connection is not in this map, continue
+                // 3. if the connection is not in this map, continue to use this flag
+                if (*trans_flag == 1) {
+                    // trans_flag value is 1. We need to send this packet to the backup server.
+                    printf("trans_flag is 1, set the trans_buffer!\n");
+                    *trans_buffer = bytes_recv;
+                    // then trigger the backup thread and returen.
+                    // pthread_cond_signal(&nonEmpty);
+                    // return ret;
+                }
                 
                 if (loop_callback != NULL) {
                     ret = loop_callback(quic, picoquic_packet_loop_after_receive, loop_callback_ctx);
@@ -536,6 +547,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 int if_index = dest_if;
                 int sock_ret = 0;
                 int sock_err = 0;
+                picoquic_cnx_t * connection_to_migrate = quic->cnx_list;
                 if ((quic->cnx_list) != NULL && quic->cnx_list->callback_ctx!=NULL) {
                     if (((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag){
                         printf("migrated to the back-up server!!\n");
@@ -548,6 +560,14 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     // set the migration flag
                     // return a value
                     // let the back server continue to send
+                    uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
+                    char* string_key = uint64_to_string(key); 
+                    if (cnx_id_table != NULL) {
+                        printf("Add this migration connection to the hashmap!\n");
+                        hashmap_put(cnx_id_table, string_key, strlen(string_key), "2");
+                    } else {
+                        printf("table is NULL\n");
+                    }
                     quic = quic_back;
                 }
                 }

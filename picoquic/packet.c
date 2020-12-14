@@ -2131,6 +2131,7 @@ int picoquic_incoming_segment(
 int picoquic_incoming_segment_master(
     picoquic_quic_t* quic,
     struct hashmap_s* cnx_id_table,
+    int* trans_flag,
     uint8_t* bytes,
     size_t length,
     size_t packet_length,
@@ -2194,10 +2195,13 @@ int picoquic_incoming_segment_master(
         if (cnx_id_table != NULL) {
             void* const element = hashmap_get(cnx_id_table, string_key, strlen(string_key));
             if (NULL == element) {
-                printf("NEW CONNECTION FIND! ADD IT TO HASH TABLE!\n");
-                hashmap_put(cnx_id_table, string_key, strlen(string_key), "2");
+                // printf("NEW CONNECTION FIND! Set the trans_flag to 1\n");
+                printf("Cant find the connection! Process the packet by myself!\n");
+                
+                // hashmap_put(cnx_id_table, string_key, strlen(string_key), "2");
             } else {
-                printf("FIND THE CONNECTION!\n");
+                printf("FIND the connection in hashmap, set trans_flag to 1~\n");
+                *trans_flag = 1;
             }
         } else
         {
@@ -2427,6 +2431,7 @@ int picoquic_incoming_packet(
 int picoquic_incoming_packet_master(
     picoquic_quic_t* quic,
     struct hashmap_s* cnx_id_table,
+    int* trans_flag,
     uint8_t* bytes,
     size_t packet_length,
     struct sockaddr* addr_from,
@@ -2444,7 +2449,7 @@ int picoquic_incoming_packet_master(
     while (consumed_index < packet_length) {
         size_t consumed = 0;
 
-        ret = picoquic_incoming_segment_master(quic, cnx_id_table, bytes + consumed_index, 
+        ret = picoquic_incoming_segment_master(quic, cnx_id_table, trans_flag, bytes + consumed_index, 
             packet_length - consumed_index, packet_length,
             &consumed, addr_from, addr_to, if_index_to, received_ecn, current_time, current_time, &previous_destid);
 

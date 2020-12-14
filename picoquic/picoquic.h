@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <picohash.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "hashmap.h"
 #endif
 
@@ -637,6 +638,7 @@ int picoquic_incoming_packet(
 int picoquic_incoming_packet_master(
     picoquic_quic_t* quic,
     struct hashmap_s* cnx_id_table,
+    int* trans_flag,
     uint8_t* bytes,
     size_t length,
     struct sockaddr* addr_from,
