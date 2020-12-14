@@ -1103,6 +1103,11 @@ void picoquic_finalize_and_protect_packet(picoquic_cnx_t *cnx, picoquic_packet_t
 
 static uint64_t picoquic_current_retransmit_timer(picoquic_cnx_t* cnx, picoquic_packet_context_enum pc)
 {
+
+    if (cnx->path == NULL) {
+        printf("CONNECTION IS NULL!!!!\n");
+        return 0;
+    }    
     uint64_t rto = cnx->path[0]->retransmit_timer;
 
     rto <<= cnx->pkt_ctx[pc].nb_retransmit;

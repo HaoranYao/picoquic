@@ -862,10 +862,11 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                 }
                 /* Submit the packet to the server */
                 // set the migration flag in this function
-                ret = picoquic_incoming_packet_master(quic, cnx_id_table, trans_flag, buffer,
-                    (size_t)bytes_recv, (struct sockaddr*) & addr_from,
-                    (struct sockaddr*) & addr_to, if_index_to, received_ecn,
-                    current_time);
+
+                ret = picoquic_incoming_packet(quic, buffer,
+                (size_t)bytes_recv, (struct sockaddr*) & addr_from,
+                (struct sockaddr*) & addr_to, if_index_to, received_ecn,
+                current_time);
                 // TODO: if migrated has happened, send it to the target server.
                 // 1. check the hashmap
                 // 2. if the connection is in this hashmap, then it should send it to the target server. So, set trans_flag to 1 and return.
@@ -918,6 +919,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                 // printf("migration flag in loop is%d\n",*migration_flag);
                 
                 // once the migration is done call quic = quic_back
+                printf("SLAVE SEND PACKET!!!!!!!!\n");
                 ret = picoquic_prepare_next_packet(quic, loop_time,
                     send_buffer, sizeof(send_buffer), &send_length,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
