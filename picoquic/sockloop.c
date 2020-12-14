@@ -408,14 +408,18 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     picoquic_quic_t* quic_back,
     struct hashmap_s* cnx_id_table,
     int* trans_flag,
-    int* trans_buffer,
-    pthread_cond_t nonEmpty,
+    int* trans_bytes,
+    uint8_t* trans_buffer,
+    unsigned char* trans_received_ecn,
+    pthread_cond_t* nonEmpty,
+    pthread_mutex_t* buffer_mutex,
     int local_port,
     int local_af,
     int dest_if,
     picoquic_packet_loop_cb_fn loop_callback,
     void* loop_callback_ctx)
 {
+    // printf("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM\n");
     int ret = 0;
     uint64_t current_time = picoquic_get_quic_time(quic);
     int64_t delay_max = 10000000;
@@ -444,11 +448,12 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
 
     if ((nb_sockets = picoquic_packet_loop_open_sockets(local_port, local_af, s_socket, sock_af, PICOQUIC_PACKET_LOOP_SOCKETS_MAX)) == 0) {
         ret = PICOQUIC_ERROR_UNEXPECTED_ERROR;
+        
     }
     else if (loop_callback != NULL) {
         ret = loop_callback(quic, picoquic_packet_loop_ready, loop_callback_ctx);
     }
-
+    printf("ret is %d\n", ret);
     /* Wait for packets */
     /* TODO: add stopping condition, was && (!just_once || !connection_done) */
     while (ret == 0) {
@@ -529,10 +534,15 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 if (*trans_flag == 1) {
                     // trans_flag value is 1. We need to send this packet to the backup server.
                     printf("trans_flag is 1, set the trans_buffer!\n");
-                    *trans_buffer = bytes_recv;
+                    printf("size of buffer is %ld\n", sizeof(buffer));
+                    pthread_mutex_lock(buffer_mutex);
+                    *trans_bytes = bytes_recv;
+                    *trans_received_ecn = received_ecn;
+                    memcpy(trans_buffer, buffer, sizeof(buffer));
                     // then trigger the backup thread and return.
-                    pthread_cond_signal(&nonEmpty);
-                    return ret;
+                    pthread_cond_signal(nonEmpty);
+                    pthread_mutex_unlock(buffer_mutex);
+                    continue;
                 }
                 
                 if (loop_callback != NULL) {
@@ -568,7 +578,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     } else {
                         printf("table is NULL\n");
                     }
-                    quic = quic_back;
+                    // quic = quic_back;
                 }
                 }
                 // printf("migration flag in loop is%d\n",*migration_flag);
@@ -717,9 +727,11 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     // picoquic_quic_t* quic_back,
     struct hashmap_s* cnx_id_table,
     int* trans_flag,
-    int* trans_buffer,
-    pthread_cond_t nonEmpty,
-    pthread_mutex_t buffer_mutex,
+    int* trans_bytes,
+    uint8_t* trans_buffer,
+    unsigned char* trans_received_ecn,
+    pthread_cond_t* nonEmpty,
+    pthread_mutex_t* buffer_mutex,
     int local_port,
     int local_af,
     int dest_if,
@@ -764,7 +776,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     while (ret == 0) {
         int socket_rank = -1;
         // int64_t delta_t = picoquic_get_next_wake_delay(quic, current_time, delay_max);
-        unsigned char received_ecn =1;
+        unsigned char received_ecn = *trans_received_ecn;
 
         if_index_to = 0;
 
@@ -774,11 +786,12 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
         //     buffer, sizeof(buffer),
         //     delta_t, &socket_rank, &current_time);
         // wait the bytes from the master thread
-        pthread_cond_wait(&nonEmpty, &buffer_mutex);
-        bytes_recv = *trans_buffer;
+        pthread_mutex_lock(buffer_mutex);
+        pthread_cond_wait(nonEmpty, buffer_mutex);
+        bytes_recv = *trans_bytes;
+        memcpy(buffer, trans_buffer, sizeof(buffer));
+        pthread_mutex_unlock(buffer_mutex);
         printf("slave thread receive packet!\n");
-        
-
 
         nb_loops++;
         if (nb_loops >= 100) {
@@ -801,6 +814,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
             uint16_t current_recv_port = socket_port;
 
             if (bytes_recv > 0) {
+                printf("GOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
                 /* track the local port value if not known yet */
                 if (socket_port == 0 && nb_sockets == 1) {
                     struct sockaddr_storage local_address;

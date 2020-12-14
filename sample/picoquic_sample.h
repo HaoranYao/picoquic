@@ -70,8 +70,11 @@ typedef struct master_thread_para
     picoquic_quic_t* quic_back;
     struct hashmap_s* cnx_id_table;
     int* trans_flag;
-    int* trans_buffer;
-    pthread_cond_t nonEmpty;
+    int* trans_bytes;
+    uint8_t* trans_buffer;
+    unsigned char* trans_received_ecn;
+    pthread_cond_t* nonEmpty;
+    pthread_mutex_t* buffer_mutex;
     int server_port;
 }master_thread_para_t;
 
@@ -80,9 +83,11 @@ typedef struct slave_thread_para
     picoquic_quic_t* quic;
     struct hashmap_s* cnx_id_table;
     int* trans_flag;
-    int* trans_buffer;
-    pthread_cond_t nonEmpty;
-    pthread_mutex_t buffer_mutex;
+    int* trans_bytes;
+    uint8_t* trans_buffer;
+    unsigned char* trans_received_ecn;
+    pthread_cond_t* nonEmpty;
+    pthread_mutex_t* buffer_mutex;
     int server_port;
 }slave_thread_para_t;
 

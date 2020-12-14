@@ -61,8 +61,7 @@
  * The server side callback is a large switch statement, with one entry
  * for each of the call back events.
  */
-pthread_mutex_t buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t nonEmpty  = PTHREAD_COND_INITIALIZER;
+
 // pthread_cond_t full  = PTHREAD_COND_INITIALIZER;
 sample_server_stream_ctx_t * sample_server_create_stream_context(sample_server_ctx_t* server_ctx, uint64_t stream_id)
 {
@@ -745,9 +744,12 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     sample_server_migration_ctx_t default_context = { 0 };
     // int trans_flag1 = 0;
     // int trans_buffer1 = 0;
-
+    pthread_mutex_t buffer_mutex_global = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t nonEmpty_global  = PTHREAD_COND_INITIALIZER;
     int* trans_flag = malloc(sizeof(int));
-    int* trans_buffer = malloc(sizeof(int));
+    int* trans_bytes = malloc(sizeof(int));
+    uint8_t* trans_buffer = malloc(1536 * sizeof(uint8_t));
+    unsigned char* trans_received_ecn = malloc(sizeof(unsigned char));
 
     default_context.default_dir = default_dir;
     default_context.default_dir_len = strlen(default_dir);
@@ -838,26 +840,32 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         master_para->cnx_id_table = cnx_id_table;
         master_para->trans_flag = trans_flag;
         master_para->trans_buffer = trans_buffer;
-        master_para->nonEmpty = nonEmpty;
+        master_para->trans_bytes = trans_bytes;
+        master_para->nonEmpty = &nonEmpty_global;
+        master_para->buffer_mutex = &buffer_mutex_global;
         master_para->server_port = server_port;
+        master_para->trans_received_ecn = trans_received_ecn;
 
         slave_thread_para_t* slave_para = malloc(sizeof(slave_thread_para_t));
         slave_para->quic = quic_back;
         slave_para->cnx_id_table = cnx_id_table;
         slave_para->trans_flag = trans_flag;
         slave_para->trans_buffer = trans_buffer;
-        slave_para->nonEmpty = nonEmpty;
-        slave_para->buffer_mutex = buffer_mutex;
+        slave_para->trans_bytes = trans_bytes;
+        slave_para->nonEmpty = &nonEmpty_global;
+        slave_para->buffer_mutex = &buffer_mutex_global;
         slave_para->server_port = server_port;
+        slave_para->trans_received_ecn = trans_received_ecn;
 
         pthread_create(&thread[0], NULL, (void *)slave_quic, slave_para);
         pthread_create(&thread[1], NULL, (void *)master_quic, master_para);
         // pthread_create(&thread[2], NULL, (void *)producer, &thread_id[2]);
-
+        // pthread_join(thread[0], NULL);
         for(int i = 0; i<2 ; i++)
         {
-            printf("#######################thread_join!\n");
+            // printf("#######################thread_join!\n");
             pthread_join(thread[i], NULL);
+            // printf("#######################thread_join!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
         }
     }
 
@@ -879,22 +887,28 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
 
 void * master_quic(void * master_para)
 {
+    
     master_thread_para_t* thread_para = (master_thread_para_t*) master_para;
     picoquic_quic_t* quic = thread_para->quic;
     picoquic_quic_t* quic_back = thread_para->quic_back;
     struct hashmap_s* cnx_id_table = thread_para->cnx_id_table;
     int* trans_flag = thread_para->trans_flag;
-    int* trans_buffer = thread_para->trans_buffer;
-    pthread_cond_t nonEmpty = thread_para->nonEmpty;
+    int* trans_bytes = thread_para->trans_bytes;
+    uint8_t* trans_buffer = thread_para->trans_buffer;
+    unsigned char* trans_received_ecn = thread_para->trans_received_ecn;
+    pthread_cond_t* nonEmpty = thread_para->nonEmpty;
+    pthread_mutex_t* buffer_mutex = thread_para->buffer_mutex;
     int server_port = thread_para->server_port;
+    printf("master?????????????????????????????????????????????\n");
     // int ret = 0;
     while (1)
     {
+        printf("master\n");
         /* lock the variable */
-        pthread_mutex_lock(&buffer_mutex);
-        picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, trans_flag, trans_buffer ,nonEmpty ,server_port, 0, 0, NULL, NULL);
+        // pthread_mutex_lock(&buffer_mutex);
+        picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, trans_flag, trans_bytes ,trans_buffer ,trans_received_ecn,nonEmpty ,buffer_mutex,server_port, 0, 0, NULL, NULL);
         /*unlock the variable*/
-        pthread_mutex_unlock(&buffer_mutex);
+        // pthread_mutex_unlock(&buffer_mutex);
     }
 }
 
@@ -902,26 +916,28 @@ void * master_quic(void * master_para)
 
 void * slave_quic(void * slave_para)
 {
-    int first = 0;
+    // int first = 0;
     slave_thread_para_t* thread_para = (slave_thread_para_t*) slave_para;
     picoquic_quic_t* quic = thread_para->quic;
     struct hashmap_s* cnx_id_table = thread_para->cnx_id_table;
     int* trans_flag = thread_para->trans_flag;
-    int* trans_buffer = thread_para->trans_buffer;
-    pthread_cond_t nonEmpty = thread_para->nonEmpty;
-    pthread_mutex_t buffer_mutex = thread_para->buffer_mutex;
+    int* trans_bytes = thread_para->trans_bytes;
+    uint8_t* trans_buffer = thread_para->trans_buffer;
+    unsigned char* trans_received_ecn = thread_para->trans_received_ecn;
+    pthread_cond_t* nonEmpty = thread_para->nonEmpty;
+    pthread_mutex_t* buffer_mutex = thread_para->buffer_mutex;
     int server_port = thread_para->server_port;
 
-
+    
     // int ret = 0;
-    while (1 && first)
+    while (1)
     {
+        printf("slave\n");
         /* lock the variable */
-        pthread_mutex_lock(&buffer_mutex);
-        picoquic_packet_loop_with_migration_slave(quic, cnx_id_table, trans_flag, trans_buffer ,nonEmpty ,buffer_mutex ,server_port, 0, 0, NULL, NULL);
+        // pthread_mutex_lock(&buffer_mutex);
+        picoquic_packet_loop_with_migration_slave(quic, cnx_id_table, trans_flag, trans_bytes ,trans_buffer,trans_received_ecn ,nonEmpty ,buffer_mutex ,server_port, 0, 0, NULL, NULL);
         /*unlock the variable*/
-        pthread_mutex_unlock(&buffer_mutex);
+        // pthread_mutex_unlock(&buffer_mutex);
     }
-    first++;
-    return (void *)0;
+
 }
