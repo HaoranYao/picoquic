@@ -830,3 +830,33 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     }
     return ret;
 }
+
+// void * master_quic(int *id)
+// {
+
+//   while (i < MAX)
+//     {
+//       /* lock the variable */
+//       pthread_mutex_lock(&count_mutex);
+//       /* wait for the buffer to have space */
+//       /* pthread_cond_wait(&full, &count_mutex);*/
+//       strcpy(buffer,"");
+//       buffer[wCount] = source[wCount%buflen];
+//       printf("%d produced :%c: by  :%d:\n",i, buffer[wCount], *id);
+//       fflush(stdout);
+//       wCount = (wCount + 1) % BUFLEN;
+//       i ++;
+//       /* for the condition notify the thread */
+//       pthread_cond_signal(&nonEmpty);
+//       /*unlock the variable*/
+//       pthread_mutex_unlock(&count_mutex);
+
+//       if (i < (MAX - 2))     
+// 	/* Last sleep might leave the condition un-processed.
+// 	 * So we prohibit sleep towards the end
+// 	 */
+// 	if (rand()%100 >= 30)
+// 	  sleep(rand()%3);
+
+//     }
+// }

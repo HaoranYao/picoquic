@@ -406,7 +406,7 @@ int picoquic_packet_loop(picoquic_quic_t* quic,
 int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     picoquic_quic_t* quic_back,
     struct hashmap_s* cnx_id_table,
-    int* migration_flag,
+    int* trans_flag,
     int local_port,
     int local_af,
     int dest_if,
@@ -514,14 +514,16 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     ((struct sockaddr_in*) & addr_to)->sin_port = current_recv_port;
                 }
                 /* Submit the packet to the server */
+                // set the migration flag in this function
                 ret = picoquic_incoming_packet_master(quic, cnx_id_table,buffer,
                     (size_t)bytes_recv, (struct sockaddr*) & addr_from,
                     (struct sockaddr*) & addr_to, if_index_to, received_ecn,
                     current_time);
-
-                // with and without migration
-                // printf("picoquic_incoming_packet reture %d\n", ret);
-
+                // TODO: if migrated has happened, send it to the target server.
+                // 1. check the hashmap
+                // 2. if the connection is in this hashmap, then it should send it to the target server. So, set trans_flag to 1 and return.
+                // 3. if the connection is not in this map, continue
+                
                 if (loop_callback != NULL) {
                     ret = loop_callback(quic, picoquic_packet_loop_after_receive, loop_callback_ctx);
                 }
@@ -542,10 +544,10 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     // loop_time = current_time;
                     // quic_back->cnx_list->next_wake_time = loop_time;
                     picoquic_shallow_migrate(quic, quic_back);
-                    // quic_back->cnx_list->next_wake_time = loop_time;
-                    // quic_back-> cnx_list = quic->cnx_list;
-                    // quic_back->cnx_last = quic->cnx_last;
-                    // last_cnx = quic->cnx_list;
+                    // TODO: change the hashmap
+                    // set the migration flag
+                    // return a value
+                    // let the back server continue to send
                     quic = quic_back;
                 }
                 }

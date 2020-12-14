@@ -2203,8 +2203,6 @@ int picoquic_incoming_segment_master(
         {
             printf("table is NULL\n");
         }
-        
-
     }
     /* Store packet if received in advance of encryption keys */
     if (ret == PICOQUIC_ERROR_AEAD_NOT_READY &&
