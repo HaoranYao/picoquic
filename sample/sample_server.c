@@ -645,11 +645,15 @@ int sample_server_migration_callback(picoquic_cnx_t* cnx,
             // time to migrate
             
         case picoquic_callback_ready:
-            // printf("###EVENT case picoquic_callback_ready\n");
             if (server_ctx->server_flag) {
                 server_ctx->migration_flag = 1;
                 /* code */
             }
+            // printf("###EVENT case picoquic_callback_ready\n");
+            // if (server_ctx->server_flag) {
+            //     server_ctx->migration_flag = 1;
+            //     /* code */
+            // }
             // printf("migration flag in callback is %d\n",server_ctx->migration_flag);
             // server_ctx_migration->flag = 1;
             // server_ctx_migration->flag = 1;
@@ -750,6 +754,22 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
     int* trans_flag = malloc(sizeof(int));
     int* trans_bytes = malloc(sizeof(int));
     uint8_t* trans_buffer = malloc(1536 * sizeof(uint8_t));
+    uint8_t* trans_send_buffer = malloc(1536 * sizeof(uint8_t));
+    struct sockaddr_storage* trans_addr_to = malloc(sizeof(struct sockaddr_storage));
+    struct sockaddr_storage* trans_addr_from = malloc(sizeof(struct sockaddr_storage));
+    struct sockaddr_storage* trans_peer_addr = malloc(sizeof(struct sockaddr_storage));
+    struct sockaddr_storage* trans_local_addr = malloc(sizeof(struct sockaddr_storage));
+
+    int* trans_s_socket = malloc(2 * sizeof(int));
+    int* trans_sock_af = malloc(2 * sizeof(int));
+    int* trans_nb_sockets = malloc(sizeof(int));
+
+
+
+    int* trans_if_index_to = malloc(sizeof(int));
+    int* trans_socket_rank = malloc(sizeof(int));
+    uint64_t* trans_current_time = malloc(sizeof(uint64_t));
+
     unsigned char* trans_received_ecn = malloc(sizeof(unsigned char));
 
     default_context.default_dir = default_dir;
@@ -840,23 +860,47 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         master_para->quic_back = quic_back;
         master_para->cnx_id_table = cnx_id_table;
         master_para->trans_flag = trans_flag;
-        master_para->trans_buffer = trans_buffer;
-        master_para->trans_bytes = trans_bytes;
+        master_para->shared_data.trans_buffer = trans_buffer;
+        master_para->shared_data.trans_send_buffer = trans_send_buffer;
+        master_para->shared_data.trans_bytes = trans_bytes;
+        master_para->shared_data.trans_received_ecn = trans_received_ecn;
+        master_para->shared_data.trans_addr_to = trans_addr_to;
+        master_para->shared_data.trans_addr_from = trans_addr_from;
+        master_para->shared_data.trans_peer_addr = trans_peer_addr;
+        master_para->shared_data.trans_local_addr = trans_local_addr;
+        master_para->shared_data.trans_if_index_to = trans_if_index_to;
+        master_para->shared_data.trans_current_time = trans_current_time;
+        master_para->shared_data.trans_socket_rank = trans_socket_rank;
+        master_para->shared_data.trans_s_socket = trans_s_socket;
+        master_para->shared_data.trans_sock_af = trans_sock_af;
+        master_para->shared_data.trans_nb_sockets = trans_nb_sockets;
         master_para->nonEmpty = &nonEmpty_global;
         master_para->buffer_mutex = &buffer_mutex_global;
         master_para->server_port = server_port;
-        master_para->trans_received_ecn = trans_received_ecn;
+        
 
         slave_thread_para_t* slave_para = malloc(sizeof(slave_thread_para_t));
         slave_para->quic = quic_back;
         slave_para->cnx_id_table = cnx_id_table;
         slave_para->trans_flag = trans_flag;
-        slave_para->trans_buffer = trans_buffer;
-        slave_para->trans_bytes = trans_bytes;
+        slave_para->shared_data.trans_buffer = trans_buffer;
+        slave_para->shared_data.trans_send_buffer = trans_send_buffer;
+        slave_para->shared_data.trans_bytes = trans_bytes;
+        slave_para->shared_data.trans_received_ecn = trans_received_ecn;
+        slave_para->shared_data.trans_addr_to = trans_addr_to;
+        slave_para->shared_data.trans_addr_from = trans_addr_from;
+        slave_para->shared_data.trans_peer_addr = trans_peer_addr;
+        slave_para->shared_data.trans_local_addr = trans_local_addr;
+        slave_para->shared_data.trans_if_index_to = trans_if_index_to;
+        slave_para->shared_data.trans_current_time = trans_current_time;
+        slave_para->shared_data.trans_socket_rank = trans_socket_rank;
+        slave_para->shared_data.trans_s_socket = trans_s_socket;
+        slave_para->shared_data.trans_sock_af = trans_sock_af;
+        slave_para->shared_data.trans_nb_sockets = trans_nb_sockets;
         slave_para->nonEmpty = &nonEmpty_global;
         slave_para->buffer_mutex = &buffer_mutex_global;
         slave_para->server_port = server_port;
-        slave_para->trans_received_ecn = trans_received_ecn;
+        
 
         pthread_create(&thread[0], NULL, (void *)slave_quic, slave_para);
         pthread_create(&thread[1], NULL, (void *)master_quic, master_para);
@@ -894,9 +938,10 @@ void * master_quic(void * master_para)
     picoquic_quic_t* quic_back = thread_para->quic_back;
     struct hashmap_s* cnx_id_table = thread_para->cnx_id_table;
     int* trans_flag = thread_para->trans_flag;
-    int* trans_bytes = thread_para->trans_bytes;
-    uint8_t* trans_buffer = thread_para->trans_buffer;
-    unsigned char* trans_received_ecn = thread_para->trans_received_ecn;
+    trans_data_t trans_data = thread_para->shared_data;
+
+
+
     pthread_cond_t* nonEmpty = thread_para->nonEmpty;
     pthread_mutex_t* buffer_mutex = thread_para->buffer_mutex;
     int server_port = thread_para->server_port;
@@ -907,7 +952,7 @@ void * master_quic(void * master_para)
         printf("master\n");
         /* lock the variable */
         // pthread_mutex_lock(buffer_mutex);
-        picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, trans_flag, trans_bytes ,trans_buffer ,trans_received_ecn,nonEmpty ,buffer_mutex,server_port, 0, 0, NULL, NULL);
+        picoquic_packet_loop_with_migration_master(quic, quic_back, cnx_id_table, trans_flag, trans_data,nonEmpty ,buffer_mutex,server_port, 0, 0, NULL, NULL);
         /*unlock the variable*/
         // pthread_mutex_unlock(buffer_mutex);
     }
@@ -922,9 +967,7 @@ void * slave_quic(void * slave_para)
     picoquic_quic_t* quic = thread_para->quic;
     struct hashmap_s* cnx_id_table = thread_para->cnx_id_table;
     int* trans_flag = thread_para->trans_flag;
-    int* trans_bytes = thread_para->trans_bytes;
-    uint8_t* trans_buffer = thread_para->trans_buffer;
-    unsigned char* trans_received_ecn = thread_para->trans_received_ecn;
+    trans_data_t trans_data = thread_para->shared_data;
     pthread_cond_t* nonEmpty = thread_para->nonEmpty;
     pthread_mutex_t* buffer_mutex = thread_para->buffer_mutex;
     int server_port = thread_para->server_port;
@@ -936,7 +979,7 @@ void * slave_quic(void * slave_para)
         printf("slave\n");
         /* lock the variable */
         // pthread_mutex_lock(&buffer_mutex);
-        picoquic_packet_loop_with_migration_slave(quic, cnx_id_table, trans_flag, trans_bytes ,trans_buffer,trans_received_ecn ,nonEmpty ,buffer_mutex ,server_port, 0, 0, NULL, NULL);
+        picoquic_packet_loop_with_migration_slave(quic, cnx_id_table, trans_flag, trans_data,nonEmpty ,buffer_mutex ,server_port, 0, 0, NULL, NULL);
         /*unlock the variable*/
         // pthread_mutex_unlock(&buffer_mutex);
     }

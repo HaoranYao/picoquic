@@ -4196,6 +4196,7 @@ int picoquic_shallow_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_s
     //need to be changed in the future, for now just get one connection!
     connection_to_migrate = old_server->cnx_list;
     picoquic_remove_cnx_from_list(connection_to_migrate);
+    picoquic_remove_cnx_from_wake_list(connection_to_migrate);
     //copy the data from the connection!
     connection_to_migrate->quic = new_server;
     picoquic_insert_cnx_in_list(new_server, connection_to_migrate);

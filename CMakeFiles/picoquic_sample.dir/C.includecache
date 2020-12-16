@@ -21,6 +21,10 @@ picoquic_utils.h
 -
 autoqlog.h
 -
+picosocks.h
+/home/haoran/quic_bak/picoquic/sample/picosocks.h
+sys/socket.h
+-
 picoquic_packet_loop.h
 /home/haoran/quic_bak/picoquic/sample/picoquic_packet_loop.h
 

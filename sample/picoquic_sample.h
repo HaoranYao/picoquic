@@ -29,6 +29,8 @@
 #include <picosocks.h>
 #include <picoquic_utils.h>
 #include <autoqlog.h>
+#include "picosocks.h"
+#include <sys/socket.h>
 #include "picoquic_packet_loop.h"
 /* Header file for the picoquic sample project. 
  * It contains the definitions common to client and server */
@@ -64,15 +66,14 @@ typedef struct st_picoquic_cnx_id_key_t {
     struct st_picoquic_cnx_id_key_t* next_cnx_id;
 } picoquic_cnx_id_key_t;
 
+
 typedef struct master_thread_para
 {
     picoquic_quic_t* quic;
     picoquic_quic_t* quic_back;
     struct hashmap_s* cnx_id_table;
     int* trans_flag;
-    int* trans_bytes;
-    uint8_t* trans_buffer;
-    unsigned char* trans_received_ecn;
+    trans_data_t shared_data;
     pthread_cond_t* nonEmpty;
     pthread_mutex_t* buffer_mutex;
     int server_port;
@@ -83,9 +84,7 @@ typedef struct slave_thread_para
     picoquic_quic_t* quic;
     struct hashmap_s* cnx_id_table;
     int* trans_flag;
-    int* trans_bytes;
-    uint8_t* trans_buffer;
-    unsigned char* trans_received_ecn;
+    trans_data_t shared_data;
     pthread_cond_t* nonEmpty;
     pthread_mutex_t* buffer_mutex;
     int server_port;

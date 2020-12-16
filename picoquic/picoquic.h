@@ -977,6 +977,28 @@ typedef struct st_picoquic_load_balancer_cid_context_t {
     void* cid_decryption_context; /* used in block cipher mode */
 } picoquic_load_balancer_cid_context_t;
 
+typedef struct trans_data
+{
+    int* trans_bytes;
+    uint8_t* trans_buffer;
+    uint8_t* trans_send_buffer;
+    int* trans_if_index_to;
+    int* trans_socket_rank;
+    uint64_t* trans_current_time;
+    unsigned char* trans_received_ecn;
+    struct sockaddr_storage* trans_addr_to;
+    struct sockaddr_storage* trans_addr_from;
+    struct sockaddr_storage* trans_peer_addr;
+    struct sockaddr_storage* trans_local_addr;
+
+
+    int* trans_s_socket;
+    int* trans_sock_af;
+    int* trans_nb_sockets;
+
+}trans_data_t;
+
+
 void picoquic_lb_compat_cid_generate(picoquic_quic_t* quic, picoquic_connection_id_t cnx_id_local, picoquic_connection_id_t cnx_id_remote, void* cnx_id_cb_data, picoquic_connection_id_t* cnx_id_returned);
 uint64_t picoquic_lb_compat_cid_verify(picoquic_quic_t* quic, void* cnx_id_cb_data, picoquic_connection_id_t const* cnx_id);
 #ifdef __cplusplus
