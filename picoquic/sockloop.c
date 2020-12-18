@@ -561,7 +561,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 // before the incoming packet function we need to check the packet.
                 // if the src port is in the hashmap we need to just continue
 
-
+                char key[128];
                 picoquic_cnx_t * connection_to_migrate = quic->cnx_list;
                 if ((quic->cnx_list) != NULL && quic->cnx_list->callback_ctx!=NULL) {
                     if (((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag){
@@ -571,11 +571,15 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     // loop_time = current_time;
                     // quic_back->cnx_list->next_wake_time = loop_time;
                     picoquic_shallow_migrate(quic, quic_back);
-                    uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
-                    char* string_key = uint64_to_string(key); 
+                    
+                    // uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
+                    // char* string_key = uint64_to_string(key); 
+                    picoquic_addr_text((struct sockaddr *)&connection_to_migrate->path[0]->peer_addr, key, sizeof(key));
+                    printf("###################################################\n");
+                    printf("%s\n",key);
                     if (cnx_id_table != NULL) {
                         printf("Add this migration connection to the hashmap!\n");
-                        hashmap_put(cnx_id_table, string_key, strlen(string_key), "2");
+                        hashmap_put(cnx_id_table, key, strlen(key), "2");
                     } else {
                         printf("table is NULL\n");
                     }
@@ -585,7 +589,26 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 }
                 }
 
-                if (*trans_flag == 1) {
+                // char test_addr[128];
+                // struct sockaddr * addr = (malloc(sizeof(struct sockaddr)));
+
+
+
+
+            // void* const element = hashmap_get(cnx_id_table, key, strlen(key));
+            // if (NULL == element) {
+            //     // printf("NEW CONNECTION FIND! Set the trans_flag to 1\n");
+            //     printf("Cant find the connection! Process the packet by myself!\n");
+                
+            //     // hashmap_put(cnx_id_table, string_key, strlen(string_key), "2");
+            // } else {
+            //     printf("FIND the connection in hashmap, set trans_flag to 1!\n");
+            //     *trans_flag = 1;
+            // }
+
+
+                // check whether it belongs to this server
+                if (hashmap_get(cnx_id_table, key, strlen(key)) != NULL) {
                     // trans_flag value is 1. We need to send this packet to the backup server.
                     printf("trans_flag is 1, set the trans_buffer!\n");
                     printf("size of buffer is %ld\n", sizeof(buffer));
@@ -645,8 +668,6 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
                     printf("MASTER THREAD send length is %ld\n ", send_length);
                 
-
-
                 /*
                 
                 ret = picoquic_prepare_next_packet(quic_back, loop_time,
