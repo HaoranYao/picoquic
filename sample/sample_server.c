@@ -569,6 +569,14 @@ int sample_server_migration_callback(picoquic_cnx_t* cnx,
                             (void) picoquic_reset_stream(cnx, stream_id, stream_ret);
                         }
                     }
+                    // start the migraton here?
+                    
+                        if (server_ctx->server_flag) {
+                            memcpy(server_ctx->file_name, stream_ctx->file_name, 256*sizeof(uint8_t));
+                            // printf("FILE NAME IS %s\n", server_ctx->file_name);
+                            server_ctx->migration_flag = 1;
+                        /* code */
+                        }
                 }
             }
             break;
@@ -645,10 +653,7 @@ int sample_server_migration_callback(picoquic_cnx_t* cnx,
             // time to migrate
             
         case picoquic_callback_ready:
-            if (server_ctx->server_flag) {
-                server_ctx->migration_flag = 1;
-                /* code */
-            }
+
             // printf("###EVENT case picoquic_callback_ready\n");
             // if (server_ctx->server_flag) {
             //     server_ctx->migration_flag = 1;

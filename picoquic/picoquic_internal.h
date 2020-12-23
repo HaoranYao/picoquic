@@ -1365,6 +1365,7 @@ typedef struct st_sample_server_migration_ctx_t {
     sample_server_stream_ctx_t* last_stream;
     int migration_flag;
     int server_flag;
+    uint8_t file_name[256];
 } sample_server_migration_ctx_t;
 
 

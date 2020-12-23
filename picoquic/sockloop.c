@@ -577,6 +577,13 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     picoquic_addr_text((struct sockaddr *)&connection_to_migrate->path[0]->peer_addr, key, sizeof(key));
                     printf("###################################################\n");
                     printf("%s\n",key);
+                    printf("File name is %s\n", ((sample_server_migration_ctx_t *)(connection_to_migrate->callback_ctx))->file_name);
+                    // if(connection_to_migrate->first_output_stream != NULL) {
+                    // sample_server_stream_ctx_t* stream_ctx = (sample_server_stream_ctx_t*)connection_to_migrate->first_output_stream->app_stream_ctx;
+                    //                     printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s", stream_ctx->file_name);
+                    // }
+
+
                     if (cnx_id_table != NULL) {
                         printf("Add this migration connection to the hashmap!\n");
                         hashmap_put(cnx_id_table, key, strlen(key), "2");
