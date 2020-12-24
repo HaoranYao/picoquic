@@ -664,16 +664,15 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     picoquic_addr_text((struct sockaddr *)&connection_to_migrate->path[0]->peer_addr, key, sizeof(key));
                     // printf("###################################################\n");
                     printf("%s\n",key);
+                    // printf("LLLLLLLLLLLLLLLLis %d\n", strlen())
                     // printf("File name is %s\n", ((sample_server_migration_ctx_t *)(connection_to_migrate->callback_ctx))->file_name);
                     // if(connection_to_migrate->first_output_stream != NULL) {
                     // sample_server_stream_ctx_t* stream_ctx = (sample_server_stream_ctx_t*)connection_to_migrate->first_output_stream->app_stream_ctx;
                     //                     printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s", stream_ctx->file_name);
                     // }
-
-
                     if (cnx_id_table != NULL) {
-                        // printf("Add this migration connection to the hashmap!\n");
-                        hashmap_put(cnx_id_table, key, strlen(key), "2");
+                        printf("Add this migration connection to the hashmap!\n");
+                        hashmap_put(cnx_id_table, key, 128, (void *)&server_number);
                     } else {
                         printf("table is NULL\n");
                     }
@@ -700,31 +699,34 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
             //     *trans_flag = 1;
             // }
 
-
+                picoquic_addr_text((struct sockaddr *)&addr_from, key, sizeof(key));
                 // check whether it belongs to this server
-                if (hashmap_get(cnx_id_table, key, strlen(key)) != NULL) {
+                if (hashmap_get(cnx_id_table, key, 128) != NULL) {
+                    printf("GET THE ELEMENT!\n");
+                    void* const element = hashmap_get(cnx_id_table, key, 128);
+                    int target_server_number = *((int *) element);
                     printf("%s\n",key);
                     // trans_flag value is 1. We need to send this packet to the backup server.
-                    printf("trans_flag is 1, set the trans_buffer!\n");
+                    // printf("trans_flag is 1, set the trans_buffer!\n");
                     // printf("size of buffer is %ld\n", sizeof(buffer));
-                    pthread_mutex_lock(&buffer_mutex[server_number]);
-                    *trans_bytes[server_number] = bytes_recv;
-                    *trans_received_ecn[server_number] = received_ecn;
-                    *trans_current_time[server_number] = current_time;
-                    *trans_socket_rank[server_number] = socket_rank;
-                    *trans_if_index_to[server_number] = if_index_to;
-                    memcpy(trans_addr_to[server_number], &addr_to, sizeof(struct sockaddr_storage));
-                    memcpy(trans_addr_from[server_number], &addr_from, sizeof(struct sockaddr_storage));
-                    memcpy(trans_peer_addr[server_number], &peer_addr, sizeof(struct sockaddr_storage));
-                    memcpy(trans_local_addr[server_number], &local_addr, sizeof(struct sockaddr_storage));
-                    memcpy(trans_sock_af[server_number], sock_af, sizeof(sock_af));
-                    memcpy(trans_s_socket[server_number], s_socket, sizeof(s_socket));
-                    *trans_nb_sockets[server_number] = nb_sockets;
-                    memcpy(trans_buffer[server_number], buffer, sizeof(buffer));
+                    pthread_mutex_lock(&buffer_mutex[target_server_number]);
+                    *trans_bytes[target_server_number] = bytes_recv;
+                    *trans_received_ecn[target_server_number] = received_ecn;
+                    *trans_current_time[target_server_number] = current_time;
+                    *trans_socket_rank[target_server_number] = socket_rank;
+                    *trans_if_index_to[target_server_number] = if_index_to;
+                    memcpy(trans_addr_to[target_server_number], &addr_to, sizeof(struct sockaddr_storage));
+                    memcpy(trans_addr_from[target_server_number], &addr_from, sizeof(struct sockaddr_storage));
+                    memcpy(trans_peer_addr[target_server_number], &peer_addr, sizeof(struct sockaddr_storage));
+                    memcpy(trans_local_addr[target_server_number], &local_addr, sizeof(struct sockaddr_storage));
+                    memcpy(trans_sock_af[target_server_number], sock_af, sizeof(sock_af));
+                    memcpy(trans_s_socket[target_server_number], s_socket, sizeof(s_socket));
+                    *trans_nb_sockets[target_server_number] = nb_sockets;
+                    memcpy(trans_buffer[target_server_number], buffer, sizeof(buffer));
                     // memcpy(trans_send_buffer, send_buffer, sizeof(send_buffer));
                     // then trigger the backup thread and return.
-                    pthread_cond_signal(&nonEmpty[server_number]);
-                    pthread_mutex_unlock(&buffer_mutex[server_number]);
+                    pthread_cond_signal(&nonEmpty[target_server_number]);
+                    pthread_mutex_unlock(&buffer_mutex[target_server_number]);
                     continue;
                 }
                 /* Submit the packet to the server */
@@ -761,7 +763,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 ret = picoquic_prepare_next_packet(quic, loop_time,
                     send_buffer, sizeof(send_buffer), &send_length,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
-                    // printf("MASTER THREAD send length is %ld\n ", send_length);
+                    printf("MASTER THREAD send length is %ld\n ", send_length);
                 
                 /*
                 

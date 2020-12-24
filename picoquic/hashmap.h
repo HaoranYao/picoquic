@@ -40,6 +40,7 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #if (defined(_MSC_VER) && defined(__AVX__)) ||                                 \
     (!defined(_MSC_VER) && defined(__SSE4_2__))
@@ -220,6 +221,7 @@ int hashmap_create(const unsigned initial_size,
 int hashmap_put(struct hashmap_s *const m, const char *const key,
                 const unsigned len, void *const value) {
   unsigned int index;
+  printf("PUT key!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%s\n", key);
 
   /* Find a place to put our value. */
   while (!hashmap_hash_helper(m, key, len, &index)) {
@@ -229,6 +231,7 @@ int hashmap_put(struct hashmap_s *const m, const char *const key,
   }
 
   /* Set the data. */
+  printf("index %d key is %s\n", index, key);
   m->data[index].data = value;
   m->data[index].key = key;
   m->data[index].key_len = len;
@@ -245,11 +248,15 @@ void *hashmap_get(const struct hashmap_s *const m, const char *const key,
 
   /* Find data location */
   curr = hashmap_hash_helper_int_helper(m, key, len);
-
+  printf("SSSSSSSSSSSSSSSSS is %d\n", m->size);
   /* Linear probing, if necessary */
   for (i = 0; i < HASHMAP_MAX_CHAIN_LENGTH; i++) {
     if (m->data[curr].in_use) {
+      printf("curr %d is in use, and the key is %s\n", curr, m->data[curr].key);
+      
       if (hashmap_match_helper(&m->data[curr], key, len)) {
+        printf("KEY 1 is %s\n", (&m->data[curr])->key);
+        printf("KEY 2 is %s\n", key);
         return m->data[curr].data;
       }
     }
@@ -418,7 +425,7 @@ unsigned hashmap_hash_helper_int_helper(const struct hashmap_s *const m,
                                         const char *const keystring,
                                         const unsigned len) {
   unsigned key = hashmap_crc32_helper(keystring, len);
-
+  // printf("UNKEY is %d\n", key);
   /* Robert Jenkins' 32 bit Mix Function */
   key += (key << 12);
   key ^= (key >> 22);
