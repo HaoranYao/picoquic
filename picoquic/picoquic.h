@@ -117,6 +117,7 @@ extern "C" {
 #define PICOQUIC_TLS_ALERT_WRONG_ALPN (0x178)
 #define PICOQUIC_TLS_HANDSHAKE_FAILED (0x201)
 
+#define CORE_NUMBER 3
 #define PICOQUIC_MAX_PACKET_SIZE 1536
 #define PICOQUIC_INITIAL_MTU_IPV4 1252
 #define PICOQUIC_INITIAL_MTU_IPV6 1232
@@ -997,6 +998,27 @@ typedef struct trans_data
     int* trans_nb_sockets;
 
 }trans_data_t;
+
+typedef struct trans_data_master
+{
+    int** trans_bytes;
+    uint8_t** trans_buffer;
+    uint8_t** trans_send_buffer;
+    int** trans_if_index_to;
+    int** trans_socket_rank;
+    uint64_t** trans_current_time;
+    unsigned char** trans_received_ecn;
+    struct sockaddr_storage** trans_addr_to;
+    struct sockaddr_storage** trans_addr_from;
+    struct sockaddr_storage** trans_peer_addr;
+    struct sockaddr_storage** trans_local_addr;
+
+
+    int** trans_s_socket;
+    int** trans_sock_af;
+    int** trans_nb_sockets;
+
+}trans_data_master_t;
 
 
 void picoquic_lb_compat_cid_generate(picoquic_quic_t* quic, picoquic_connection_id_t cnx_id_local, picoquic_connection_id_t cnx_id_remote, void* cnx_id_cb_data, picoquic_connection_id_t* cnx_id_returned);

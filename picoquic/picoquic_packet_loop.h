@@ -58,10 +58,10 @@ int picoquic_packet_loop_with_migration(picoquic_quic_t* quic,
     void* loop_callback_ctx);
 
 int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
-    picoquic_quic_t* quic_back,
+    picoquic_quic_t** quic_back,
     struct hashmap_s* cnx_id_table,
-    int* trans_flag,
-    trans_data_t trans_data,
+    int** trans_flag,
+    trans_data_master_t trans_data,
     pthread_cond_t* nonEmpty,
     pthread_mutex_t* buffer_mutex,
     int local_port,
@@ -71,6 +71,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     void* loop_callback_ctx);
 
 int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
+    int id,
     // picoquic_quic_t* quic_back,
     struct hashmap_s* cnx_id_table,
     int* trans_flag,

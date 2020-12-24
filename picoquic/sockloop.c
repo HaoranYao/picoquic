@@ -423,10 +423,10 @@ int picoquic_packet_loop(picoquic_quic_t* quic,
 
 
 int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
-    picoquic_quic_t* quic_back,
+    picoquic_quic_t** quic_back,
     struct hashmap_s* cnx_id_table,
-    int* trans_flag,
-    trans_data_t shared_data,
+    int** trans_flag,
+    trans_data_master_t shared_data,
     pthread_cond_t* nonEmpty,
     pthread_mutex_t* buffer_mutex,
     int local_port,
@@ -435,27 +435,109 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     picoquic_packet_loop_cb_fn loop_callback,
     void* loop_callback_ctx)
 {
-    int* trans_bytes = shared_data.trans_bytes;
-    uint8_t* trans_buffer = shared_data.trans_buffer;
-    // uint8_t* trans_send_buffer = shared_data.trans_send_buffer;
-    unsigned char* trans_received_ecn = shared_data.trans_received_ecn;
-    struct sockaddr_storage* trans_addr_to = shared_data.trans_addr_to;
-    struct sockaddr_storage* trans_addr_from = shared_data.trans_addr_from;
-    
-    int* trans_if_index_to = shared_data.trans_if_index_to;
-    int* trans_socket_rank = shared_data.trans_socket_rank;
-    uint64_t* trans_current_time = shared_data.trans_current_time;
 
-    struct sockaddr_storage* trans_peer_addr = shared_data.trans_peer_addr;
-    struct sockaddr_storage* trans_local_addr = shared_data.trans_local_addr;
+    // int* trans_bytes[CORE_NUMBER] = {NULL};
+    // memcpy(trans_bytes, shared_data.trans_bytes, CORE_NUMBER * sizeof(int *));
+    int** trans_bytes= shared_data.trans_bytes;
+    // uint8_t* trans_buffer[CORE_NUMBER] = {NULL};
+    // memcpy(trans_buffer, shared_data.trans_buffer, CORE_NUMBER * sizeof(uint8_t *));
+    uint8_t** trans_buffer = shared_data.trans_buffer;
+    // uint8_t* trans_send_buffer[CORE_NUMBER] = {NULL};
+    // memcpy(trans_send_buffer, shared_data.trans_send_buffer, CORE_NUMBER * sizeof(uint8_t *));
+    // uint8_t** trans_send_buffer = shared_data.trans_send_buffer;
+    // unsigned char* trans_received_ecn[CORE_NUMBER] = {NULL};
+    // memcpy(trans_received_ecn, shared_data.trans_received_ecn, CORE_NUMBER * sizeof(unsigned char *));
+    unsigned char** trans_received_ecn = shared_data.trans_received_ecn;
+    // struct sockaddr_storage* trans_addr_to[CORE_NUMBER] = {NULL};
+    // memcpy(trans_addr_to, shared_data.trans_addr_to, CORE_NUMBER * sizeof(struct sockaddr_storage *));
+    struct sockaddr_storage** trans_addr_to = shared_data.trans_addr_to;
+    // struct sockaddr_storage* trans_addr_from[CORE_NUMBER] = {NULL};
+    // memcpy(trans_addr_from, shared_data.trans_addr_from, CORE_NUMBER * sizeof(struct sockaddr_storage *));
+    struct sockaddr_storage** trans_addr_from = shared_data.trans_addr_from;
+    
+    // int* trans_if_index_to[CORE_NUMBER] = {NULL};
+    // memcpy(trans_if_index_to, shared_data.trans_if_index_to, CORE_NUMBER * sizeof(int *));
+    int** trans_if_index_to = shared_data.trans_if_index_to;
+    // int* trans_socket_rank[CORE_NUMBER] = {NULL};
+    // memcpy(trans_socket_rank, shared_data.trans_socket_rank, CORE_NUMBER * sizeof(int *));
+    int** trans_socket_rank= shared_data.trans_socket_rank;
+    // uint64_t* trans_current_time[CORE_NUMBER] = {NULL};
+    // memcpy(trans_current_time, shared_data.trans_current_time, CORE_NUMBER * sizeof(uint64_t*));
+    uint64_t** trans_current_time = shared_data.trans_current_time;
+
+    // struct sockaddr_storage* trans_peer_addr[CORE_NUMBER] = {NULL};
+    // memcpy(trans_peer_addr, shared_data.trans_peer_addr, CORE_NUMBER * sizeof(struct sockaddr_storage *));
+    struct sockaddr_storage** trans_peer_addr= shared_data.trans_peer_addr;
+    // struct sockaddr_storage* trans_local_addr[CORE_NUMBER] = {NULL};
+    // memcpy(trans_local_addr, shared_data.trans_local_addr, CORE_NUMBER * sizeof(struct sockaddr_storage *));
+    struct sockaddr_storage** trans_local_addr = shared_data.trans_local_addr;
+
+
     struct sockaddr_storage peer_addr;
     struct sockaddr_storage local_addr;
 
+    // int* trans_s_socket[CORE_NUMBER] = {NULL};
+    // memcpy(trans_s_socket, shared_data.trans_s_socket, CORE_NUMBER * sizeof(int *));
+    SOCKET_TYPE** trans_s_socket = shared_data.trans_s_socket;
+    // int* trans_sock_af[CORE_NUMBER] = {NULL};
+    // memcpy(trans_sock_af, shared_data.trans_sock_af, CORE_NUMBER * sizeof(int *));
+    int** trans_sock_af = shared_data.trans_sock_af;
+    // int* trans_nb_sockets[CORE_NUMBER] = {NULL};
+    // memcpy(trans_nb_sockets, shared_data.trans_nb_sockets, CORE_NUMBER * sizeof(int *));
+    int** trans_nb_sockets = shared_data.trans_nb_sockets;
 
-    SOCKET_TYPE* trans_s_socket = shared_data.trans_s_socket;
-    int* trans_sock_af = shared_data.trans_sock_af;
-    int* trans_nb_sockets = shared_data.trans_nb_sockets;
+    // int* trans_bytes[CORE_NUMBER] = {NULL};
+    // memcpy(trans_bytes, shared_data.trans_bytes, CORE_NUMBER * sizeof(int *));
+    // // int* trans_bytes[CORE_NUMBER] = shared_data.trans_bytes;
+    // uint8_t* trans_buffer[CORE_NUMBER] = {NULL};
+    // memcpy(trans_buffer, shared_data.trans_buffer, CORE_NUMBER * sizeof(uint8_t *));
+    // // uint8_t* trans_buffer[CORE_NUMBER] = shared_data.trans_buffer;
+    // uint8_t* trans_send_buffer[CORE_NUMBER] = {NULL};
+    // memcpy(trans_send_buffer, shared_data.trans_send_buffer, CORE_NUMBER * sizeof(uint8_t *));
+    // // uint8_t* trans_send_buffer = shared_data.trans_send_buffer;
+    // unsigned char* trans_received_ecn[CORE_NUMBER] = {NULL};
+    // memcpy(trans_received_ecn, shared_data.trans_received_ecn, CORE_NUMBER * sizeof(unsigned char *));
+    // // unsigned char* trans_received_ecn[CORE_NUMBER] = shared_data.trans_received_ecn;
+    // struct sockaddr_storage* trans_addr_to[CORE_NUMBER] = {NULL};
+    // memcpy(trans_addr_to, shared_data.trans_addr_to, CORE_NUMBER * sizeof(struct sockaddr_storage *));
+    // // struct sockaddr_storage* trans_addr_to[CORE_NUMBER] = shared_data.trans_addr_to;
+    // struct sockaddr_storage* trans_addr_from[CORE_NUMBER] = {NULL};
+    // memcpy(trans_addr_from, shared_data.trans_addr_from, CORE_NUMBER * sizeof(struct sockaddr_storage *));
+    // // struct sockaddr_storage* trans_addr_from[CORE_NUMBER] = shared_data.trans_addr_from;
+    
+    // int* trans_if_index_to[CORE_NUMBER] = {NULL};
+    // memcpy(trans_if_index_to, shared_data.trans_if_index_to, CORE_NUMBER * sizeof(int *));
+    // // int* trans_if_index_to[CORE_NUMBER] = shared_data.trans_if_index_to;
+    // int* trans_socket_rank[CORE_NUMBER] = {NULL};
+    // memcpy(trans_socket_rank, shared_data.trans_socket_rank, CORE_NUMBER * sizeof(int *));
+    // // int* trans_socket_rank[CORE_NUMBER] = shared_data.trans_socket_rank;
+    // uint64_t* trans_current_time[CORE_NUMBER] = {NULL};
+    // memcpy(trans_current_time, shared_data.trans_current_time, CORE_NUMBER * sizeof(uint64_t*));
+    // // uint64_t* trans_current_time[CORE_NUMBER] = shared_data.trans_current_time;
 
+    // struct sockaddr_storage* trans_peer_addr[CORE_NUMBER] = {NULL};
+    // memcpy(trans_peer_addr, shared_data.trans_peer_addr, CORE_NUMBER * sizeof(struct sockaddr_storage *));
+    // // struct sockaddr_storage* trans_peer_addr[CORE_NUMBER] = shared_data.trans_peer_addr;
+    // struct sockaddr_storage* trans_local_addr[CORE_NUMBER] = {NULL};
+    // memcpy(trans_local_addr, shared_data.trans_local_addr, CORE_NUMBER * sizeof(struct sockaddr_storage *));
+    // // struct sockaddr_storage* trans_local_addr[CORE_NUMBER] = shared_data.trans_local_addr;
+
+
+    // struct sockaddr_storage peer_addr[CORE_NUMBER] = {NULL};
+    // struct sockaddr_storage local_addr[CORE_NUMBER] = {NULL};
+
+    // int* trans_s_socket[CORE_NUMBER] = {NULL};
+    // memcpy(trans_s_socket, shared_data.trans_s_socket, CORE_NUMBER * sizeof(int *));
+    // // SOCKET_TYPE* trans_s_socket[CORE_NUMBER] = shared_data.trans_s_socket;
+    // int* trans_sock_af[CORE_NUMBER] = {NULL};
+    // memcpy(trans_sock_af, shared_data.trans_sock_af, CORE_NUMBER * sizeof(int *));
+    // // int* trans_sock_af[CORE_NUMBER] = shared_data.trans_sock_af;
+    // int* trans_nb_sockets[CORE_NUMBER] = {NULL};
+    // memcpy(trans_nb_sockets, shared_data.trans_nb_sockets, CORE_NUMBER * sizeof(int *));
+    // // int* trans_nb_sockets[CORE_NUMBER] = shared_data.trans_nb_sockets;
+
+    // int round_robin = 0;
+    int server_number = 0;
     int ret = 0;
     uint64_t current_time = picoquic_get_quic_time(quic);
     int64_t delay_max = 10000000;
@@ -476,6 +558,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     int testing_migration = 0; /* Hook for the migration test */
     uint16_t next_port = 0; /* Data for the migration test */
     picoquic_cnx_t* last_cnx = NULL;
+
 #ifdef _WINDOWS
     WSADATA wsaData = { 0 };
     (void)WSA_START(MAKEWORD(2, 2), &wsaData);
@@ -488,7 +571,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     else if (loop_callback != NULL) {
         ret = loop_callback(quic, picoquic_packet_loop_ready, loop_callback_ctx);
     }
-    printf("ret is %d\n", ret);
+    // printf("ret is %d\n", ret);
     /* Wait for packets */
     /* TODO: add stopping condition, was && (!just_once || !connection_done) */
     while (ret == 0) {
@@ -563,21 +646,25 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
 
                 char key[128];
                 picoquic_cnx_t * connection_to_migrate = quic->cnx_list;
-                if ((quic->cnx_list) != NULL && quic->cnx_list->callback_ctx!=NULL) {
-                    if (((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag){
-                        printf("migrated to the back-up server!!\n");
-                        ((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag = 0;
+                if (connection_to_migrate == NULL) {
+                    printf("NNNNNNNNNNNNNNNNNNNNNNOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
+                }
+                if (connection_to_migrate != NULL && connection_to_migrate->callback_ctx!=NULL) {
+                    printf("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n");
+                    if (((sample_server_migration_ctx_t *) (connection_to_migrate->callback_ctx))->migration_flag){
+                    ((sample_server_migration_ctx_t *) (connection_to_migrate->callback_ctx))->migration_flag = 0;
                     // current_time = picoquic_get_quic_time(quic_back);
                     // loop_time = current_time;
                     // quic_back->cnx_list->next_wake_time = loop_time;
-                    picoquic_shallow_migrate(quic, quic_back);
-                    
+                    server_number = (server_number + 1) % CORE_NUMBER;
+                    printf("migrated to the back-up server %d!!\n", server_number);
+                    picoquic_shallow_migrate(quic, quic_back[server_number]);
                     // uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
                     // char* string_key = uint64_to_string(key); 
                     picoquic_addr_text((struct sockaddr *)&connection_to_migrate->path[0]->peer_addr, key, sizeof(key));
-                    printf("###################################################\n");
+                    // printf("###################################################\n");
                     printf("%s\n",key);
-                    printf("File name is %s\n", ((sample_server_migration_ctx_t *)(connection_to_migrate->callback_ctx))->file_name);
+                    // printf("File name is %s\n", ((sample_server_migration_ctx_t *)(connection_to_migrate->callback_ctx))->file_name);
                     // if(connection_to_migrate->first_output_stream != NULL) {
                     // sample_server_stream_ctx_t* stream_ctx = (sample_server_stream_ctx_t*)connection_to_migrate->first_output_stream->app_stream_ctx;
                     //                     printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s", stream_ctx->file_name);
@@ -585,13 +672,13 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
 
 
                     if (cnx_id_table != NULL) {
-                        printf("Add this migration connection to the hashmap!\n");
+                        // printf("Add this migration connection to the hashmap!\n");
                         hashmap_put(cnx_id_table, key, strlen(key), "2");
                     } else {
                         printf("table is NULL\n");
                     }
-                    printf("change quic!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n");
-                    *trans_flag =1;
+                    // printf("change quic!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n");
+                    *trans_flag[server_number] =1;
                     // quic = quic_back;
                 }
                 }
@@ -616,27 +703,28 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
 
                 // check whether it belongs to this server
                 if (hashmap_get(cnx_id_table, key, strlen(key)) != NULL) {
+                    printf("%s\n",key);
                     // trans_flag value is 1. We need to send this packet to the backup server.
                     printf("trans_flag is 1, set the trans_buffer!\n");
-                    printf("size of buffer is %ld\n", sizeof(buffer));
-                    pthread_mutex_lock(buffer_mutex);
-                    *trans_bytes = bytes_recv;
-                    *trans_received_ecn = received_ecn;
-                    *trans_current_time = current_time;
-                    *trans_socket_rank = socket_rank;
-                    *trans_if_index_to = if_index_to;
-                    memcpy(trans_addr_to, &addr_to, sizeof(struct sockaddr_storage));
-                    memcpy(trans_addr_from, &addr_from, sizeof(struct sockaddr_storage));
-                    memcpy(trans_peer_addr, &peer_addr, sizeof(struct sockaddr_storage));
-                    memcpy(trans_local_addr, &local_addr, sizeof(struct sockaddr_storage));
-                    memcpy(trans_sock_af, sock_af, sizeof(sock_af));
-                    memcpy(trans_s_socket, s_socket, sizeof(s_socket));
-                    *trans_nb_sockets = nb_sockets;
-                    memcpy(trans_buffer, buffer, sizeof(buffer));
+                    // printf("size of buffer is %ld\n", sizeof(buffer));
+                    pthread_mutex_lock(&buffer_mutex[server_number]);
+                    *trans_bytes[server_number] = bytes_recv;
+                    *trans_received_ecn[server_number] = received_ecn;
+                    *trans_current_time[server_number] = current_time;
+                    *trans_socket_rank[server_number] = socket_rank;
+                    *trans_if_index_to[server_number] = if_index_to;
+                    memcpy(trans_addr_to[server_number], &addr_to, sizeof(struct sockaddr_storage));
+                    memcpy(trans_addr_from[server_number], &addr_from, sizeof(struct sockaddr_storage));
+                    memcpy(trans_peer_addr[server_number], &peer_addr, sizeof(struct sockaddr_storage));
+                    memcpy(trans_local_addr[server_number], &local_addr, sizeof(struct sockaddr_storage));
+                    memcpy(trans_sock_af[server_number], sock_af, sizeof(sock_af));
+                    memcpy(trans_s_socket[server_number], s_socket, sizeof(s_socket));
+                    *trans_nb_sockets[server_number] = nb_sockets;
+                    memcpy(trans_buffer[server_number], buffer, sizeof(buffer));
                     // memcpy(trans_send_buffer, send_buffer, sizeof(send_buffer));
                     // then trigger the backup thread and return.
-                    pthread_cond_signal(nonEmpty);
-                    pthread_mutex_unlock(buffer_mutex);
+                    pthread_cond_signal(&nonEmpty[server_number]);
+                    pthread_mutex_unlock(&buffer_mutex[server_number]);
                     continue;
                 }
                 /* Submit the packet to the server */
@@ -673,7 +761,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 ret = picoquic_prepare_next_packet(quic, loop_time,
                     send_buffer, sizeof(send_buffer), &send_length,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
-                    printf("MASTER THREAD send length is %ld\n ", send_length);
+                    // printf("MASTER THREAD send length is %ld\n ", send_length);
                 
                 /*
                 
@@ -812,6 +900,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
 
 int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     // picoquic_quic_t* quic_back,
+    int id,
     struct hashmap_s* cnx_id_table,
     int* trans_flag,
     trans_data_t shared_data,
@@ -908,7 +997,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
         nb_sockets = *trans_nb_sockets;
         // memcpy(send_buffer, trans_send_buffer, sizeof(send_buffer));
         pthread_mutex_unlock(buffer_mutex);
-        printf("slave thread receive packet!\n");
+        // printf("slave thread receive packet!\n");
 
         nb_loops++;
         if (nb_loops >= 100) {
@@ -931,7 +1020,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
             uint16_t current_recv_port = socket_port;
 
             if (bytes_recv > 0) {
-                printf("GOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
+                // printf("GOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
                 /* track the local port value if not known yet */
                 if (socket_port == 0 && nb_sockets == 1) {
                     struct sockaddr_storage local_address;
@@ -1024,12 +1113,12 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                 
                 // once the migration is done call quic = quic_back
 
-                printf("SLAVE SEND PACKET!!!!!!!!\n");
+                // printf("SLAVE SEND PACKET!!!!!!!!\n");
                 ret = picoquic_prepare_next_packet(quic, loop_time,
                     send_buffer, sizeof(send_buffer), &send_length,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
                 
-                printf("SLAVE THREAD send length is %ld\n", send_length);
+                printf("SLAVE %d THREAD send length is %ld\n",id, send_length);
 
                 /*
                 

@@ -70,10 +70,10 @@ typedef struct st_picoquic_cnx_id_key_t {
 typedef struct master_thread_para
 {
     picoquic_quic_t* quic;
-    picoquic_quic_t* quic_back;
+    picoquic_quic_t** quic_back;
     struct hashmap_s* cnx_id_table;
-    int* trans_flag;
-    trans_data_t shared_data;
+    int** trans_flag;
+    trans_data_master_t shared_data;
     pthread_cond_t* nonEmpty;
     pthread_mutex_t* buffer_mutex;
     int server_port;
@@ -81,6 +81,7 @@ typedef struct master_thread_para
 
 typedef struct slave_thread_para
 {
+    int id;
     picoquic_quic_t* quic;
     struct hashmap_s* cnx_id_table;
     int* trans_flag;
