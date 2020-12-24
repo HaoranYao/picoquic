@@ -647,10 +647,10 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 char key[128];
                 picoquic_cnx_t * connection_to_migrate = quic->cnx_list;
                 if (connection_to_migrate == NULL) {
-                    printf("NNNNNNNNNNNNNNNNNNNNNNOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
+                    // printf("NNNNNNNNNNNNNNNNNNNNNNOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
                 }
                 if (connection_to_migrate != NULL && connection_to_migrate->callback_ctx!=NULL) {
-                    printf("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n");
+                    // printf("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n");
                     if (((sample_server_migration_ctx_t *) (connection_to_migrate->callback_ctx))->migration_flag){
                     ((sample_server_migration_ctx_t *) (connection_to_migrate->callback_ctx))->migration_flag = 0;
                     // current_time = picoquic_get_quic_time(quic_back);
@@ -763,7 +763,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 ret = picoquic_prepare_next_packet(quic, loop_time,
                     send_buffer, sizeof(send_buffer), &send_length,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
-                    printf("MASTER THREAD send length is %ld\n ", send_length);
+                    // printf("MASTER THREAD send length is %ld\n ", send_length);
                 
                 /*
                 
@@ -1120,7 +1120,8 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                     send_buffer, sizeof(send_buffer), &send_length,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
                 
-                printf("SLAVE %d THREAD send length is %ld\n",id, send_length);
+                // printf("SLAVE %d THREAD send length is %ld\n",id, send_length);
+                printf("SLAVE %d THREAD send bytes!\n",id);
 
                 /*
                 
