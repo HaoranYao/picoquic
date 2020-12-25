@@ -442,6 +442,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     // uint8_t* trans_buffer[CORE_NUMBER] = {NULL};
     // memcpy(trans_buffer, shared_data.trans_buffer, CORE_NUMBER * sizeof(uint8_t *));
     uint8_t** trans_buffer = shared_data.trans_buffer;
+    // uint8_t** trans_send_buffer = shared_data.trans_send_buffer;
     // uint8_t* trans_send_buffer[CORE_NUMBER] = {NULL};
     // memcpy(trans_send_buffer, shared_data.trans_send_buffer, CORE_NUMBER * sizeof(uint8_t *));
     // uint8_t** trans_send_buffer = shared_data.trans_send_buffer;
@@ -644,12 +645,14 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 // before the incoming packet function we need to check the packet.
                 // if the src port is in the hashmap we need to just continue
 
-                char key[128];
+                
                 picoquic_cnx_t * connection_to_migrate = quic->cnx_list;
                 if (connection_to_migrate == NULL) {
                     // printf("NNNNNNNNNNNNNNNNNNNNNNOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
                 }
                 if (connection_to_migrate != NULL && connection_to_migrate->callback_ctx!=NULL) {
+                    char* key_string = malloc(128 * sizeof(char));
+                    memset(key_string, '0', 128);
                     // printf("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n");
                     if (((sample_server_migration_ctx_t *) (connection_to_migrate->callback_ctx))->migration_flag){
                     ((sample_server_migration_ctx_t *) (connection_to_migrate->callback_ctx))->migration_flag = 0;
@@ -661,9 +664,9 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     picoquic_shallow_migrate(quic, quic_back[server_number]);
                     // uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
                     // char* string_key = uint64_to_string(key); 
-                    picoquic_addr_text((struct sockaddr *)&connection_to_migrate->path[0]->peer_addr, key, sizeof(key));
+                    picoquic_addr_text((struct sockaddr *)&connection_to_migrate->path[0]->peer_addr, key_string, 128);
                     // printf("###################################################\n");
-                    printf("%s\n",key);
+                    printf("%s\n",key_string);
                     // printf("LLLLLLLLLLLLLLLLis %d\n", strlen())
                     // printf("File name is %s\n", ((sample_server_migration_ctx_t *)(connection_to_migrate->callback_ctx))->file_name);
                     // if(connection_to_migrate->first_output_stream != NULL) {
@@ -672,7 +675,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     // }
                     if (cnx_id_table != NULL) {
                         printf("Add this migration connection to the hashmap!\n");
-                        hashmap_put(cnx_id_table, key, 128, (void *)&server_number);
+                        hashmap_put(cnx_id_table, key_string, 128, (void *)&server_number);
                     } else {
                         printf("table is NULL\n");
                     }
@@ -698,17 +701,20 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
             //     printf("FIND the connection in hashmap, set trans_flag to 1!\n");
             //     *trans_flag = 1;
             // }
-
-                picoquic_addr_text((struct sockaddr *)&addr_from, key, sizeof(key));
+                char* key = malloc(128 * sizeof(char));
+                memset(key, '0', 128);
+                picoquic_addr_text((struct sockaddr *)&addr_from, key, 128);
                 // check whether it belongs to this server
                 if (hashmap_get(cnx_id_table, key, 128) != NULL) {
-                    printf("GET THE ELEMENT!\n");
+                    // printf("GET THE ELEMENT!\n");
                     void* const element = hashmap_get(cnx_id_table, key, 128);
                     int target_server_number = *((int *) element);
-                    printf("%s\n",key);
+                    // printf("%s\n",key);
+                    free(key);
                     // trans_flag value is 1. We need to send this packet to the backup server.
                     // printf("trans_flag is 1, set the trans_buffer!\n");
                     // printf("size of buffer is %ld\n", sizeof(buffer));
+                    // printf("this packet belongs to server %d addr is %s\n", server_number)
                     pthread_mutex_lock(&buffer_mutex[target_server_number]);
                     *trans_bytes[target_server_number] = bytes_recv;
                     *trans_received_ecn[target_server_number] = received_ecn;
@@ -725,7 +731,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     memcpy(trans_buffer[target_server_number], buffer, sizeof(buffer));
                     // memcpy(trans_send_buffer, send_buffer, sizeof(send_buffer));
                     // then trigger the backup thread and return.
-                    pthread_cond_signal(&nonEmpty[target_server_number]);
+                    // pthread_cond_signal(&nonEmpty[target_server_number]);
                     pthread_mutex_unlock(&buffer_mutex[target_server_number]);
                     continue;
                 }
@@ -739,7 +745,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 (size_t)bytes_recv, (struct sockaddr*) & addr_from,
                 (struct sockaddr*) & addr_to, if_index_to, received_ecn,
                 current_time);
-
+                
                 // TODO: if migrated has happened, send it to the target server.
                 // 1. check the hashmap
                 // 2. if the connection is in this hashmap, then it should send it to the target server. So, set trans_flag to 1 and return.
@@ -983,7 +989,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
         //     delta_t, &socket_rank, &current_time);
         // wait the bytes from the master thread
         pthread_mutex_lock(buffer_mutex);
-        pthread_cond_wait(nonEmpty, buffer_mutex);
+        // pthread_cond_wait(nonEmpty, buffer_mutex);
         unsigned char received_ecn = *trans_received_ecn;
         bytes_recv = *trans_bytes;
         if_index_to = *trans_if_index_to;
@@ -994,6 +1000,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
         memcpy(&peer_addr, trans_peer_addr, sizeof(struct sockaddr_storage));
         memcpy(&local_addr, trans_local_addr, sizeof(struct sockaddr_storage));
         memcpy(buffer, trans_buffer, sizeof(buffer));
+        // memcpy(send_buffer, trans_send_buffer, sizeof(buffer));
         memcpy(sock_af, trans_sock_af, sizeof(sock_af));
         memcpy(s_socket, trans_s_socket, sizeof(s_socket));
         nb_sockets = *trans_nb_sockets;
@@ -1119,9 +1126,15 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                 ret = picoquic_prepare_next_packet(quic, loop_time,
                     send_buffer, sizeof(send_buffer), &send_length,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
+                if (send_length > 0) {
+                    char* key = malloc(128 * sizeof(char));
+                    memset(key, '0', 128);
+                    picoquic_addr_text((struct sockaddr *)&peer_addr, key, 128);
+                    printf("SLAVE %d THREAD send length is %ld to %s\n",id, send_length, key);
+                    free(key);
+                }
                 
-                // printf("SLAVE %d THREAD send length is %ld\n",id, send_length);
-                printf("SLAVE %d THREAD send bytes!\n",id);
+                // printf("SLAVE %d THREAD send bytes!\n",id);
 
                 /*
                 

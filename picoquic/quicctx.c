@@ -967,12 +967,17 @@ static void picoquic_insert_cnx_in_list(picoquic_quic_t* quic, picoquic_cnx_t* c
 static void picoquic_remove_cnx_from_list(picoquic_cnx_t* cnx)
 {
     if (cnx->next_in_table == NULL) {
+        
         cnx->quic->cnx_last = cnx->previous_in_table;
     } else {
         cnx->next_in_table->previous_in_table = cnx->previous_in_table;
     }
 
     if (cnx->previous_in_table == NULL) {
+        // if (cnx->next_in_table == NULL) {
+        //     printf("OKKKKKKKKKKKKKKKKKKKKKKK\n");
+        // }
+        
         cnx->quic->cnx_list = cnx->next_in_table;
     }
     else {

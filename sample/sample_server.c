@@ -806,13 +806,13 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         trans_current_time[i] = malloc(sizeof(uint64_t));
         trans_received_ecn[i] = malloc(sizeof(unsigned char));
 
-        sample_server_migration_ctx_t default_context = { 0 };
-        default_context.default_dir = default_dir;
-        default_context.default_dir_len = strlen(default_dir);
-        default_context.migration_flag = 0;
-        default_context.server_flag = 0;
+        sample_server_migration_ctx_t* default_context = malloc(sizeof(sample_server_migration_ctx_t));
+        default_context->default_dir = default_dir;
+        default_context->default_dir_len = strlen(default_dir);
+        default_context->migration_flag = 0;
+        default_context->server_flag = 0;
         quic_back_server[i] = picoquic_create(8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
-        sample_server_migration_callback, &default_context, NULL, NULL, NULL, current_time, NULL, NULL, NULL, 0);
+        sample_server_migration_callback, default_context, NULL, NULL, NULL, current_time, NULL, NULL, NULL, 0);
 
         slave_para[i] = malloc(sizeof(slave_thread_para_t));
         slave_para[i]->id = i;

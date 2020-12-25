@@ -231,7 +231,7 @@ int hashmap_put(struct hashmap_s *const m, const char *const key,
   }
 
   /* Set the data. */
-  printf("index %d key is %s\n", index, key);
+  // printf("index %d key is %s\n", index, key);
   m->data[index].data = value;
   m->data[index].key = key;
   m->data[index].key_len = len;
@@ -248,13 +248,16 @@ void *hashmap_get(const struct hashmap_s *const m, const char *const key,
 
   /* Find data location */
   curr = hashmap_hash_helper_int_helper(m, key, len);
+  // printf("CURR IS %d\n", curr);
+  // printf("KEY 2 is %s\n", key);
   // printf("SSSSSSSSSSSSSSSSS is %d\n", m->size);
   /* Linear probing, if necessary */
   for (i = 0; i < HASHMAP_MAX_CHAIN_LENGTH; i++) {
     if (m->data[curr].in_use) {
-      printf("curr %d is in use, and the key is %s\n", curr, m->data[curr].key);
+      // printf("curr %d is in use, and the key is %s\n", curr, m->data[curr].key);
       
       if (hashmap_match_helper(&m->data[curr], key, len)) {
+
         // printf("KEY 1 is %s\n", (&m->data[curr])->key);
         // printf("KEY 2 is %s\n", key);
         return m->data[curr].data;
@@ -263,7 +266,7 @@ void *hashmap_get(const struct hashmap_s *const m, const char *const key,
 
     curr = (curr + 1) % m->table_size;
   }
-
+  printf("CANT FIND\n");
   /* Not found */
   return HASHMAP_NULL;
 }
