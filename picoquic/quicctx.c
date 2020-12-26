@@ -469,6 +469,117 @@ picoquic_quic_t* picoquic_create(uint32_t nb_connections,
     return quic;
 }
 
+/* QUIC context create and dispose */
+picoquic_quic_t* picoquic_create_id(
+    int id,
+    uint32_t nb_connections,
+    char const* cert_file_name,
+    char const* key_file_name, 
+    char const * cert_root_file_name,
+    char const* default_alpn,
+    picoquic_stream_data_cb_fn default_callback_fn,
+    void* default_callback_ctx,
+    picoquic_connection_id_cb_fn cnx_id_callback,
+    void* cnx_id_callback_ctx,
+    uint8_t reset_seed[PICOQUIC_RESET_SECRET_SIZE],
+    uint64_t current_time,
+    uint64_t* p_simulated_time,
+    char const* ticket_file_name,
+    const uint8_t* ticket_encryption_key,
+    size_t ticket_encryption_key_length)
+{
+    picoquic_quic_t* quic = (picoquic_quic_t*)malloc(sizeof(picoquic_quic_t));
+    int ret = 0;
+    // int quic_id = id;
+
+    if (quic != NULL) {
+        /* TODO: winsock init */
+        /* TODO: open UDP sockets - maybe */
+        memset(quic, 0, sizeof(picoquic_quic_t));
+
+        quic->default_callback_fn = default_callback_fn;
+        quic->default_callback_ctx = default_callback_ctx;
+        quic->default_congestion_alg = PICOQUIC_DEFAULT_CONGESTION_ALGORITHM;
+        quic->default_alpn = picoquic_string_duplicate(default_alpn);
+        quic->cnx_id_callback_fn = cnx_id_callback;
+        quic->cnx_id_callback_ctx = cnx_id_callback_ctx;
+        quic->p_simulated_time = p_simulated_time;
+        quic->local_cnxid_length = 8; /* TODO: should be lower on clients-only implementation */
+        quic->padding_multiple_default = 0; /* TODO: consider default = 128 */
+        quic->padding_minsize_default = PICOQUIC_RESET_PACKET_MIN_SIZE;
+        quic->crypto_epoch_length_max = 0;
+        quic->max_simultaneous_logs = PICOQUIC_DEFAULT_SIMULTANEOUS_LOGS;
+        quic->max_half_open_before_retry = PICOQUIC_DEFAULT_HALF_OPEN_RETRY_THRESHOLD;
+        picoquic_wake_list_init(quic);
+
+        if (cnx_id_callback != NULL) {
+            quic->unconditional_cnx_id = 1;
+        }
+
+        if (ticket_file_name != NULL) {
+            quic->ticket_file_name = ticket_file_name;
+            ret = picoquic_load_tickets(&quic->p_first_ticket, current_time, ticket_file_name);
+
+            if (ret == PICOQUIC_ERROR_NO_SUCH_FILE) {
+                DBG_PRINTF("Ticket file <%s> not created yet.\n", ticket_file_name);
+                ret = 0;
+            }
+            else if (ret != 0) {
+                DBG_PRINTF("Cannot load tickets from <%s>\n", ticket_file_name);
+                ret = 0;
+            }
+        }
+
+        if (ret == 0) {
+            quic->table_cnx_by_id = picohash_create((size_t)nb_connections * 4,
+                picoquic_cnx_id_hash, picoquic_cnx_id_compare);
+
+            quic->table_cnx_by_net = picohash_create((size_t)nb_connections * 4,
+                picoquic_net_id_hash, picoquic_net_id_compare);
+
+            quic->table_cnx_by_icid = picohash_create((size_t)nb_connections,
+                picoquic_net_icid_hash, picoquic_net_icid_compare);
+
+            quic->table_cnx_by_secret = picohash_create((size_t)nb_connections * 4,
+                picoquic_net_secret_hash, picoquic_net_secret_compare);
+
+            picosplay_init_tree(&quic->token_reuse_tree, picoquic_registered_token_compare,
+                picoquic_registered_token_create, picoquic_registered_token_delete, picoquic_registered_token_value);
+
+            if (quic->table_cnx_by_id == NULL || quic->table_cnx_by_net == NULL ||
+                quic->table_cnx_by_icid == NULL || quic->table_cnx_by_secret == NULL) {
+                ret = -1;
+                DBG_PRINTF("%s", "Cannot initialize hash tables\n");
+            }
+            else if (picoquic_master_tlscontext(quic, cert_file_name, key_file_name, cert_root_file_name, ticket_encryption_key, ticket_encryption_key_length) != 0) {
+                ret = -1;
+                DBG_PRINTF("%s", "Cannot create TLS context \n");
+            }
+            else {
+                /* the random generator was initialized as part of the TLS context.
+                 * Use it to create the seed for generating the per context stateless
+                 * resets and the retry tokens */
+
+                if (!reset_seed)
+                    picoquic_crypto_random(quic, quic->reset_seed, sizeof(quic->reset_seed));
+                else
+                    memcpy(quic->reset_seed, reset_seed, sizeof(quic->reset_seed));
+
+                picoquic_crypto_random(quic, quic->retry_seed, sizeof(quic->retry_seed));
+
+                /* If there is no root certificate context specified, use a null certifier. */
+            }
+        }
+        
+        if (ret != 0) {
+            picoquic_free(quic);
+            quic = NULL;
+        }
+    }
+    quic->id = id;
+    return quic;
+}
+
 int picoquic_load_token_file(picoquic_quic_t* quic, char const * token_file_name)
 {
     uint64_t current_time = picoquic_get_quic_time(quic);

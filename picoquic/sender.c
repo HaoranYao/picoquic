@@ -3876,6 +3876,8 @@ int picoquic_prepare_next_packet_ex(picoquic_quic_t* quic,
     }
 
     if (sp != NULL) {
+
+        printf("shit id is %d SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\n",quic->id);
         if (sp->length > send_buffer_max) {
             *send_length = 0;
         }

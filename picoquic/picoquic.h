@@ -117,7 +117,7 @@ extern "C" {
 #define PICOQUIC_TLS_ALERT_WRONG_ALPN (0x178)
 #define PICOQUIC_TLS_HANDSHAKE_FAILED (0x201)
 
-#define CORE_NUMBER 3
+#define CORE_NUMBER 2
 #define PICOQUIC_MAX_PACKET_SIZE 1536
 #define PICOQUIC_INITIAL_MTU_IPV4 1252
 #define PICOQUIC_INITIAL_MTU_IPV6 1232
@@ -421,6 +421,24 @@ picoquic_quic_t* picoquic_create(uint32_t nb_connections,
     void* default_callback_ctx,
     picoquic_connection_id_cb_fn cnx_id_callback,
     void* cnx_id_callback_data,
+    uint8_t reset_seed[PICOQUIC_RESET_SECRET_SIZE],
+    uint64_t current_time,
+    uint64_t* p_simulated_time,
+    char const* ticket_file_name,
+    const uint8_t* ticket_encryption_key,
+    size_t ticket_encryption_key_length);
+
+picoquic_quic_t* picoquic_create_id(
+    int id,
+    uint32_t nb_connections,
+    char const* cert_file_name,
+    char const* key_file_name, 
+    char const * cert_root_file_name,
+    char const* default_alpn,
+    picoquic_stream_data_cb_fn default_callback_fn,
+    void* default_callback_ctx,
+    picoquic_connection_id_cb_fn cnx_id_callback,
+    void* cnx_id_callback_ctx,
     uint8_t reset_seed[PICOQUIC_RESET_SECRET_SIZE],
     uint64_t current_time,
     uint64_t* p_simulated_time,

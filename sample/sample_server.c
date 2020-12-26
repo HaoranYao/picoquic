@@ -811,7 +811,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         default_context->default_dir_len = strlen(default_dir);
         default_context->migration_flag = 0;
         default_context->server_flag = 0;
-        quic_back_server[i] = picoquic_create(8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
+        quic_back_server[i] = picoquic_create_id(i,8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
         sample_server_migration_callback, default_context, NULL, NULL, NULL, current_time, NULL, NULL, NULL, 0);
 
         slave_para[i] = malloc(sizeof(slave_thread_para_t));
@@ -941,7 +941,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         pthread_create(&thread[CORE_NUMBER], NULL, (void *)master_quic, master_para);
         // pthread_create(&thread[2], NULL, (void *)producer, &thread_id[2]);
         // pthread_join(thread[0], NULL);
-        for(int i = 0; i<2 ; i++)
+        for(int i = 0; i<CORE_NUMBER+1 ; i++)
         {
             // printf("#######################thread_join!\n");
             pthread_join(thread[i], NULL);

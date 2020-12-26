@@ -468,14 +468,13 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
 
     // struct sockaddr_storage* trans_peer_addr[CORE_NUMBER] = {NULL};
     // memcpy(trans_peer_addr, shared_data.trans_peer_addr, CORE_NUMBER * sizeof(struct sockaddr_storage *));
-    struct sockaddr_storage** trans_peer_addr= shared_data.trans_peer_addr;
+    // struct sockaddr_storage** trans_peer_addr= shared_data.trans_peer_addr;
     // struct sockaddr_storage* trans_local_addr[CORE_NUMBER] = {NULL};
     // memcpy(trans_local_addr, shared_data.trans_local_addr, CORE_NUMBER * sizeof(struct sockaddr_storage *));
-    struct sockaddr_storage** trans_local_addr = shared_data.trans_local_addr;
+    // struct sockaddr_storage** trans_local_addr = shared_data.trans_local_addr;
 
 
-    struct sockaddr_storage peer_addr;
-    struct sockaddr_storage local_addr;
+    
 
     // int* trans_s_socket[CORE_NUMBER] = {NULL};
     // memcpy(trans_s_socket, shared_data.trans_s_socket, CORE_NUMBER * sizeof(int *));
@@ -659,7 +658,10 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     // current_time = picoquic_get_quic_time(quic_back);
                     // loop_time = current_time;
                     // quic_back->cnx_list->next_wake_time = loop_time;
+                    // server_number++;
+                    int * target_server = malloc(sizeof(int));
                     server_number = (server_number + 1) % CORE_NUMBER;
+                    *target_server = server_number;
                     printf("migrated to the back-up server %d!!\n", server_number);
                     picoquic_shallow_migrate(quic, quic_back[server_number]);
                     // uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
@@ -675,7 +677,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     // }
                     if (cnx_id_table != NULL) {
                         printf("Add this migration connection to the hashmap!\n");
-                        hashmap_put(cnx_id_table, key_string, 128, (void *)&server_number);
+                        hashmap_put(cnx_id_table, key_string, 128, (void *)target_server);
                     } else {
                         printf("table is NULL\n");
                     }
@@ -710,11 +712,12 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     void* const element = hashmap_get(cnx_id_table, key, 128);
                     int target_server_number = *((int *) element);
                     // printf("%s\n",key);
-                    free(key);
+                    
                     // trans_flag value is 1. We need to send this packet to the backup server.
                     // printf("trans_flag is 1, set the trans_buffer!\n");
                     // printf("size of buffer is %ld\n", sizeof(buffer));
-                    // printf("this packet belongs to server %d addr is %s\n", server_number)
+                    // printf("this packet belongs to server %d addr is %s\n", target_server_number, key);
+                    free(key);
                     pthread_mutex_lock(&buffer_mutex[target_server_number]);
                     *trans_bytes[target_server_number] = bytes_recv;
                     *trans_received_ecn[target_server_number] = received_ecn;
@@ -723,8 +726,8 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     *trans_if_index_to[target_server_number] = if_index_to;
                     memcpy(trans_addr_to[target_server_number], &addr_to, sizeof(struct sockaddr_storage));
                     memcpy(trans_addr_from[target_server_number], &addr_from, sizeof(struct sockaddr_storage));
-                    memcpy(trans_peer_addr[target_server_number], &peer_addr, sizeof(struct sockaddr_storage));
-                    memcpy(trans_local_addr[target_server_number], &local_addr, sizeof(struct sockaddr_storage));
+                    // memcpy(trans_peer_addr[target_server_number], &peer_addr, sizeof(struct sockaddr_storage));
+                    // memcpy(trans_local_addr[target_server_number], &local_addr, sizeof(struct sockaddr_storage));
                     memcpy(trans_sock_af[target_server_number], sock_af, sizeof(sock_af));
                     memcpy(trans_s_socket[target_server_number], s_socket, sizeof(s_socket));
                     *trans_nb_sockets[target_server_number] = nb_sockets;
@@ -758,6 +761,8 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
             }
 
             while (ret == 0) {
+                struct sockaddr_storage peer_addr;
+    struct sockaddr_storage local_addr;
             
                 
                 int if_index = dest_if;
@@ -930,15 +935,14 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     int* trans_if_index_to = shared_data.trans_if_index_to;
     int* trans_socket_rank = shared_data.trans_socket_rank;
     uint64_t* trans_current_time = shared_data.trans_current_time;
-    struct sockaddr_storage* trans_peer_addr = shared_data.trans_peer_addr;
-    struct sockaddr_storage* trans_local_addr = shared_data.trans_local_addr;
+    // struct sockaddr_storage* trans_peer_addr = shared_data.trans_peer_addr;
+    // struct sockaddr_storage* trans_local_addr = shared_data.trans_local_addr;
 
     SOCKET_TYPE* trans_s_socket = shared_data.trans_s_socket;
     int* trans_sock_af = shared_data.trans_sock_af;
     int* trans_nb_sockets = shared_data.trans_nb_sockets;
 
-    struct sockaddr_storage peer_addr;
-    struct sockaddr_storage local_addr;
+
 
     int ret = 0;
     uint64_t current_time = picoquic_get_quic_time(quic);
@@ -997,8 +1001,8 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
         current_time = *trans_current_time;
         memcpy(&addr_to, trans_addr_to, sizeof(struct sockaddr_storage));
         memcpy(&addr_from, trans_addr_from, sizeof(struct sockaddr_storage));
-        memcpy(&peer_addr, trans_peer_addr, sizeof(struct sockaddr_storage));
-        memcpy(&local_addr, trans_local_addr, sizeof(struct sockaddr_storage));
+        // memcpy(&peer_addr, trans_peer_addr, sizeof(struct sockaddr_storage));
+        // memcpy(&local_addr, trans_local_addr, sizeof(struct sockaddr_storage));
         memcpy(buffer, trans_buffer, sizeof(buffer));
         // memcpy(send_buffer, trans_send_buffer, sizeof(buffer));
         memcpy(sock_af, trans_sock_af, sizeof(sock_af));
@@ -1087,6 +1091,8 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
             }
 
             while (ret == 0) {
+                    struct sockaddr_storage peer_addr;
+    struct sockaddr_storage local_addr;
             
                 // struct sockaddr_storage peer_addr;
                 // struct sockaddr_storage local_addr;
@@ -1130,7 +1136,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                     char* key = malloc(128 * sizeof(char));
                     memset(key, '0', 128);
                     picoquic_addr_text((struct sockaddr *)&peer_addr, key, 128);
-                    printf("SLAVE %d THREAD send length is %ld to %s\n",id, send_length, key);
+                    // printf("SLAVE %d THREAD send length is %ld to %s\n",id, send_length, key);
                     free(key);
                 }
                 
