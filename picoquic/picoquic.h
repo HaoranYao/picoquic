@@ -118,7 +118,7 @@ extern "C" {
 #define PICOQUIC_TLS_HANDSHAKE_FAILED (0x201)
 
 #define CORE_NUMBER 1
-#define LB_MODE 3
+#define LB_MODE 1
 #define ROUND_LB 1
 #define HASH_LB 2
 #define FILE_LB 3
