@@ -450,7 +450,7 @@ int picoquic_sample_client(char const * server_name, int server_port, char const
     picoquic_quic_t* quic = NULL;
     char const* ticket_store_filename = PICOQUIC_SAMPLE_CLIENT_TICKET_STORE;
     char const* token_store_filename = PICOQUIC_SAMPLE_CLIENT_TOKEN_STORE;
-    char const* qlog_dir = PICOQUIC_SAMPLE_CLIENT_QLOG_DIR;
+    // char const* qlog_dir = PICOQUIC_SAMPLE_CLIENT_QLOG_DIR;
     sample_client_ctx_t client_ctx = { 0 };
     picoquic_cnx_t* cnx = NULL;
     uint64_t current_time = picoquic_current_time();
@@ -493,8 +493,8 @@ int picoquic_sample_client(char const * server_name, int server_port, char const
             picoquic_set_default_congestion_algorithm(quic, picoquic_bbr_algorithm);
 
             picoquic_set_key_log_file_from_env(quic);
-            picoquic_set_qlog(quic, qlog_dir);
-            picoquic_set_log_level(quic, 1);
+            // picoquic_set_qlog(quic, qlog_dir);
+            picoquic_set_log_level(quic, 0);
         }
     }
 

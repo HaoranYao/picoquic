@@ -883,7 +883,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
 
         picoquic_set_default_congestion_algorithm(quic, picoquic_bbr_algorithm);
 
-        picoquic_set_qlog(quic, qlog_dir);
+        // picoquic_set_qlog(quic, qlog_dir);
 
         picoquic_set_log_level(quic, 1);
 

@@ -660,17 +660,38 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     // quic_back->cnx_list->next_wake_time = loop_time;
                     // server_number++;
                     int * target_server = malloc(sizeof(int));
-                    server_number = (server_number + 1) % CORE_NUMBER;
-                    *target_server = server_number;
-                    printf("migrated to the back-up server %d!!\n", server_number);
-                    picoquic_shallow_migrate(quic, quic_back[server_number]);
+                    switch (LB_MODE)
+                    {
+                    case ROUND_LB:
+                    {
+                        server_number = (server_number + 1) % CORE_NUMBER;
+                        *target_server = server_number;
+                        /* code */
+                        break;
+                    }   
+                    case FILE_LB:
+                    {
+                        uint8_t* file_name = ((sample_server_migration_ctx_t *)(connection_to_migrate->callback_ctx))->file_name;
+                        printf("File name is %s\n", (char *)file_name);
+                        printf("Name length is %ld\n", strlen((char *)file_name));
+                        *target_server = atoi((char *)file_name);
+                        break;
+                    }
+                    default:
+                        *target_server = 0;
+                        break;
+                    }
+                    
+                    
+                    printf("migrated to the back-up server %d!!\n", *target_server);
+                    picoquic_shallow_migrate(quic, quic_back[*target_server]);
                     // uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
                     // char* string_key = uint64_to_string(key); 
                     picoquic_addr_text((struct sockaddr *)&connection_to_migrate->path[0]->peer_addr, key_string, 128);
                     // printf("###################################################\n");
                     printf("%s\n",key_string);
                     // printf("LLLLLLLLLLLLLLLLis %d\n", strlen())
-                    // printf("File name is %s\n", ((sample_server_migration_ctx_t *)(connection_to_migrate->callback_ctx))->file_name);
+                    // 
                     // if(connection_to_migrate->first_output_stream != NULL) {
                     // sample_server_stream_ctx_t* stream_ctx = (sample_server_stream_ctx_t*)connection_to_migrate->first_output_stream->app_stream_ctx;
                     //                     printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ %s", stream_ctx->file_name);
