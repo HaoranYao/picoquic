@@ -485,6 +485,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     // int* trans_nb_sockets[CORE_NUMBER] = {NULL};
     // memcpy(trans_nb_sockets, shared_data.trans_nb_sockets, CORE_NUMBER * sizeof(int *));
     int** trans_nb_sockets = shared_data.trans_nb_sockets;
+    pthread_mutex_t* socket_mutex = shared_data.socket_mutex;
 
     // int* trans_bytes[CORE_NUMBER] = {NULL};
     // memcpy(trans_bytes, shared_data.trans_bytes, CORE_NUMBER * sizeof(int *));
@@ -649,7 +650,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 if (connection_to_migrate == NULL) {
                     // printf("NNNNNNNNNNNNNNNNNNNNNNOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
                 }
-                if (connection_to_migrate != NULL && connection_to_migrate->callback_ctx!=NULL) {
+                while (connection_to_migrate != NULL && connection_to_migrate->callback_ctx!=NULL) {
                     char* key_string = malloc(128 * sizeof(char));
                     memset(key_string, '0', 128);
                     // printf("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n");
@@ -706,6 +707,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     *trans_flag[server_number] =1;
                     // quic = quic_back;
                 }
+                connection_to_migrate = connection_to_migrate->next_in_table;
                 }
 
                 // char test_addr[128];
@@ -755,7 +757,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     memcpy(trans_buffer[target_server_number], buffer, sizeof(buffer));
                     // memcpy(trans_send_buffer, send_buffer, sizeof(send_buffer));
                     // then trigger the backup thread and return.
-                    // pthread_cond_signal(&nonEmpty[target_server_number]);
+                    pthread_cond_signal(&nonEmpty[target_server_number]);
                     pthread_mutex_unlock(&buffer_mutex[target_server_number]);
                     continue;
                 }
@@ -789,6 +791,17 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 int if_index = dest_if;
                 int sock_ret = 0;
                 int sock_err = 0;
+                // picoquic_cnx_t* cnx_temp = picoquic_get_earliest_cnx_to_wake(quic, current_time);
+                // if (cnx_temp != NULL && cnx_temp->callback_ctx!=NULL) {
+                //     // char* key_string = malloc(128 * sizeof(char));
+                //     // memset(key_string, '0', 128);
+                //     // printf("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n");
+                //     if (((sample_server_migration_ctx_t *) (cnx_temp->callback_ctx))->migration_flag){
+                //         break;
+                //     // ((sample_server_migration_ctx_t *) (cnx_temp->callback_ctx))->migration_flag = 0;
+                //     }
+                // }
+
                 // printf("migration flag in loop is%d\n",*migration_flag);
                                 // printf("size of send_buffer is %ld", sizeof(send_buffer));
                 // once the migration is done call quic = quic_back
@@ -833,11 +846,13 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                                 send_socket = s_socket[nb_sockets - 1];
                             }
                         }
+                        pthread_mutex_lock(socket_mutex);
 
                         sock_ret = picoquic_send_through_socket(send_socket,
                             (struct sockaddr*) & peer_addr, (struct sockaddr*) & local_addr, if_index,
                             (const char*)send_buffer, (int)send_length, &sock_err);
                         // printf("sock_ret is %d\n", sock_ret);
+                        pthread_mutex_unlock(socket_mutex);
                     }
 
                     if (sock_ret <= 0) {
@@ -962,7 +977,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     SOCKET_TYPE* trans_s_socket = shared_data.trans_s_socket;
     int* trans_sock_af = shared_data.trans_sock_af;
     int* trans_nb_sockets = shared_data.trans_nb_sockets;
-
+    pthread_mutex_t* socket_mutex = shared_data.socket_mutex;
 
 
     int ret = 0;
@@ -1014,7 +1029,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
         //     delta_t, &socket_rank, &current_time);
         // wait the bytes from the master thread
         pthread_mutex_lock(buffer_mutex);
-        // pthread_cond_wait(nonEmpty, buffer_mutex);
+        pthread_cond_wait(nonEmpty, buffer_mutex);
         unsigned char received_ecn = *trans_received_ecn;
         bytes_recv = *trans_bytes;
         if_index_to = *trans_if_index_to;
@@ -1150,6 +1165,12 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                 // once the migration is done call quic = quic_back
 
                 // printf("SLAVE SEND PACKET!!!!!!!!\n");
+                // char* key = malloc(128 * sizeof(char));
+                    // memset(key, '0', 128);
+                    // picoquic_addr_text((struct sockaddr *)&peer_addr, key, 128);
+                // printf("SLAVE %d THREAD send length is %ld\n",id, send_length);
+                // free(key);
+                
                 ret = picoquic_prepare_next_packet(quic, loop_time,
                     send_buffer, sizeof(send_buffer), &send_length,
                     &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
@@ -1157,7 +1178,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                     char* key = malloc(128 * sizeof(char));
                     memset(key, '0', 128);
                     picoquic_addr_text((struct sockaddr *)&peer_addr, key, 128);
-                    // printf("SLAVE %d THREAD send length is %ld to %s\n",id, send_length, key);
+                    printf("SLAVE %d THREAD send length is %ld to %s\n",id, send_length, key);
                     free(key);
                 }
                 
@@ -1199,10 +1220,11 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                                 send_socket = s_socket[nb_sockets - 1];
                             }
                         }
-
+                        pthread_mutex_lock(socket_mutex);
                         sock_ret = picoquic_send_through_socket(send_socket,
                             (struct sockaddr*) & peer_addr, (struct sockaddr*) & local_addr, if_index,
                             (const char*)send_buffer, (int)send_length, &sock_err);
+                        pthread_mutex_unlock(socket_mutex);
                         // printf("sock_ret is %d\n", sock_ret);
                     }
 

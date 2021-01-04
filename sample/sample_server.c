@@ -758,6 +758,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
 
 
     pthread_mutex_t buffer_mutex_global[CORE_NUMBER] = {PTHREAD_MUTEX_INITIALIZER};
+    pthread_mutex_t socket_mutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_cond_t nonEmpty_global[CORE_NUMBER] = {PTHREAD_COND_INITIALIZER};
     int* trans_flag[CORE_NUMBER] = {NULL};
     int* trans_bytes[CORE_NUMBER] = {NULL};
@@ -836,6 +837,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         slave_para[i]->nonEmpty = &nonEmpty_global[i];
         slave_para[i]->buffer_mutex = &buffer_mutex_global[i];
         slave_para[i]->server_port = server_port;
+        slave_para[i]->shared_data.socket_mutex = &socket_mutex;
 
 
         if (quic_back_server[i] == NULL) {
@@ -929,6 +931,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         master_para->shared_data.trans_nb_sockets = trans_nb_sockets;
         master_para->nonEmpty = nonEmpty_global;
         master_para->buffer_mutex = buffer_mutex_global;
+        master_para->shared_data.socket_mutex = &socket_mutex;
         master_para->server_port = server_port;
         
         for (size_t i = 0; i < CORE_NUMBER; i++)
@@ -974,9 +977,6 @@ void * master_quic(void * master_para)
     struct hashmap_s* cnx_id_table = thread_para->cnx_id_table;
     int** trans_flag = thread_para->trans_flag;
     trans_data_master_t trans_data = thread_para->shared_data;
-
-
-
     pthread_cond_t* nonEmpty = thread_para->nonEmpty;
     pthread_mutex_t* buffer_mutex = thread_para->buffer_mutex;
     int server_port = thread_para->server_port;

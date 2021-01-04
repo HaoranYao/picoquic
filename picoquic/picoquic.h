@@ -1013,7 +1013,7 @@ typedef struct trans_data
     struct sockaddr_storage* trans_addr_from;
     struct sockaddr_storage* trans_peer_addr;
     struct sockaddr_storage* trans_local_addr;
-
+    pthread_mutex_t* socket_mutex;
 
     int* trans_s_socket;
     int* trans_sock_af;
@@ -1034,8 +1034,7 @@ typedef struct trans_data_master
     struct sockaddr_storage** trans_addr_from;
     struct sockaddr_storage** trans_peer_addr;
     struct sockaddr_storage** trans_local_addr;
-
-
+    pthread_mutex_t* socket_mutex;
     int** trans_s_socket;
     int** trans_sock_af;
     int** trans_nb_sockets;

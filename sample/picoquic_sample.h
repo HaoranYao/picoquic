@@ -77,6 +77,7 @@ typedef struct master_thread_para
     pthread_cond_t* nonEmpty;
     pthread_mutex_t* buffer_mutex;
     int server_port;
+    pthread_mutex_t* socket_mutex;
 }master_thread_para_t;
 
 typedef struct slave_thread_para
@@ -88,6 +89,7 @@ typedef struct slave_thread_para
     trans_data_t shared_data;
     pthread_cond_t* nonEmpty;
     pthread_mutex_t* buffer_mutex;
+    pthread_mutex_t* socket_mutex;
     int server_port;
 }slave_thread_para_t;
 

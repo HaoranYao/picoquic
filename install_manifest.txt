@@ -1,0 +1,15 @@
+/usr/local/bin/picoquicdemo
+/usr/local/bin/picolog_t
+/usr/local/lib/libpicoquic-core.a
+/usr/local/lib/libpicoquic-log.a
+/usr/local/lib/libpicohttp-core.a
+/usr/local/include/picoquic.h
+/usr/local/include/picosocks.h
+/usr/local/include/picoquic_utils.h
+/usr/local/include/picoquic_packet_loop.h
+/usr/local/include/picoquic_unified_log.h
+/usr/local/include/picoquic_logger.h
+/usr/local/include/picoquic_binlog.h
+/usr/local/include/h3zero.h
+/usr/local/include/democlient.h
+/usr/local/include/demoserver.h
