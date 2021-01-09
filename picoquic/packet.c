@@ -1974,6 +1974,7 @@ int picoquic_incoming_segment(
         if (cnx == NULL) {
             /* Unexpected packet. Reject, drop and log. */
             if (!picoquic_is_connection_id_null(&ph.dest_cnx_id)) {
+                printf("SLAVE WRONG HERE\n");
                 picoquic_process_unexpected_cnxid(quic, length, addr_from, addr_to, if_index_to, &ph);
             }
             ret = PICOQUIC_ERROR_DETECTED;
@@ -2235,6 +2236,7 @@ int picoquic_incoming_segment_master(
         if (cnx == NULL) {
             /* Unexpected packet. Reject, drop and log. */
             if (!picoquic_is_connection_id_null(&ph.dest_cnx_id)) {
+                printf("MASTER\n");
                 picoquic_process_unexpected_cnxid(quic, length, addr_from, addr_to, if_index_to, &ph);
             }
             ret = PICOQUIC_ERROR_DETECTED;

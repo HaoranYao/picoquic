@@ -577,6 +577,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
     /* Wait for packets */
     /* TODO: add stopping condition, was && (!just_once || !connection_done) */
     while (ret == 0) {
+        printf("MASTER WHILE 1\n");
         int socket_rank = -1;
         int64_t delta_t = picoquic_get_next_wake_delay(quic, current_time, delay_max);
         unsigned char received_ecn;
@@ -652,7 +653,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                 if (connection_to_migrate == NULL) {
                     // printf("NNNNNNNNNNNNNNNNNNNNNNOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
                 }
-                while (connection_to_migrate != NULL && connection_to_migrate->callback_ctx!=NULL) {
+                if (connection_to_migrate != NULL && connection_to_migrate->callback_ctx!=NULL) {
                     char* key_string = malloc(128 * sizeof(char));
                     memset(key_string, '0', 128);
                     // printf("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n");
@@ -707,7 +708,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     *trans_flag[server_number] =1;
                     // quic = quic_back;
                 }
-                connection_to_migrate = connection_to_migrate->next_in_table;
+                // connection_to_migrate = connection_to_migrate->next_in_table;
                 }
 
                 // char test_addr[128];
@@ -759,6 +760,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                     // then trigger the backup thread and return.
                     pthread_cond_signal(&nonEmpty[target_server_number]);
                     pthread_mutex_unlock(&buffer_mutex[target_server_number]);
+                    printf("CONTINUE HERE\n");
                     continue;
                 }
                 /* Submit the packet to the server */
@@ -784,6 +786,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
             }
 
             while (ret == 0) {
+                printf("MASTER WHILE 2\n");
                 struct sockaddr_storage peer_addr;
     struct sockaddr_storage local_addr;
             
@@ -971,7 +974,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     // unsigned char* trans_received_ecn = shared_data.trans_received_ecn;
     int* trans_if_index_to = shared_data.trans_if_index_to;
     int* trans_socket_rank = shared_data.trans_socket_rank;
-    uint64_t* trans_current_time = shared_data.trans_current_time;
+    // uint64_t* trans_current_time = shared_data.trans_current_time;
     // struct sockaddr_storage* trans_peer_addr = shared_data.trans_peer_addr;
     // struct sockaddr_storage* trans_local_addr = shared_data.trans_local_addr;
 
@@ -979,8 +982,6 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     int* trans_sock_af = shared_data.trans_sock_af;
     int* trans_nb_sockets = shared_data.trans_nb_sockets;
     pthread_mutex_t* socket_mutex = shared_data.socket_mutex;
-
-
     int ret = 0;
     uint64_t current_time = picoquic_get_quic_time(quic);
     int64_t delay_max = 10000000;
@@ -1021,6 +1022,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     /* Wait for packets */
     /* TODO: add stopping condition, was && (!just_once || !connection_done) */
     while (ret == 0) {
+        printf("SLAVE WHILE 1\n");
         int socket_rank = -1;
         uint64_t current_time = picoquic_get_quic_time(quic);
         int64_t delta_t = picoquic_get_next_wake_delay(quic, current_time, delay_max);
@@ -1055,7 +1057,8 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
             bytes_recv = *trans_bytes;
             if_index_to = *trans_if_index_to;
             socket_rank = *trans_socket_rank;
-            current_time = *trans_current_time;
+            // current_time = *trans_current_time;
+            current_time = picoquic_get_quic_time(quic);
             memcpy(&addr_to, trans_addr_to, sizeof(struct sockaddr_storage));
             memcpy(&addr_from, trans_addr_from, sizeof(struct sockaddr_storage));
             // memcpy(&peer_addr, trans_peer_addr, sizeof(struct sockaddr_storage));
@@ -1156,6 +1159,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
         
 
         while (ret == 0) {
+            printf("SLAVE WHILE 2\n");
 
             struct sockaddr_storage peer_addr;
             struct sockaddr_storage local_addr;
@@ -1276,7 +1280,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                 }
             }
             else {
-                // printf("SLLLLLLLLLLLLLLLLLLLLLLLLLLAVE BREAK\n");
+                printf("SLLLLLLLLLLLLLLLLLLLLLLLLLLAVE BREAK\n");
                 break;
             }
         }
