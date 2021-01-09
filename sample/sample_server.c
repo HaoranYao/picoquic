@@ -812,7 +812,7 @@ int picoquic_sample_server_test_migration(int server_port, const char* server_ce
         default_context->default_dir_len = strlen(default_dir);
         default_context->migration_flag = 0;
         default_context->server_flag = 0;
-        quic_back_server[i] = picoquic_create_id(i,8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
+        quic_back_server[i] = picoquic_create_id(i+1,8, server_cert, server_key, NULL, PICOQUIC_SAMPLE_ALPN,
         sample_server_migration_callback, default_context, NULL, NULL, NULL, current_time, NULL, NULL, NULL, 0);
 
         slave_para[i] = malloc(sizeof(slave_thread_para_t));

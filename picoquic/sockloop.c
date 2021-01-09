@@ -283,6 +283,7 @@ int picoquic_packet_loop(picoquic_quic_t* quic,
                 */
 
                 if (ret == 0 && send_length > 0) {
+                    printf("CLIENT SEND PACKET\n");
                     SOCKET_TYPE send_socket = INVALID_SOCKET;
                     loop_count_time = current_time;
                     nb_loops = 0;
@@ -610,6 +611,7 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
             uint16_t current_recv_port = socket_port;
 
             if (bytes_recv > 0) {
+                printf("MASTER RECEIVE PACKET\n");
                 /* track the local port value if not known yet */
                 if (socket_port == 0 && nb_sockets == 1) {
                     struct sockaddr_storage local_address;
@@ -682,8 +684,6 @@ int picoquic_packet_loop_with_migration_master(picoquic_quic_t* quic,
                         *target_server = 0;
                         break;
                     }
-                    
-                    
                     printf("migrated to the back-up server %d!!\n", *target_server);
                     picoquic_shallow_migrate(quic, quic_back[*target_server]);
                     // uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
@@ -968,6 +968,7 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     unsigned char* trans_received_ecn = shared_data.trans_received_ecn;
     struct sockaddr_storage* trans_addr_to = shared_data.trans_addr_to;
     struct sockaddr_storage* trans_addr_from = shared_data.trans_addr_from;
+    // unsigned char* trans_received_ecn = shared_data.trans_received_ecn;
     int* trans_if_index_to = shared_data.trans_if_index_to;
     int* trans_socket_rank = shared_data.trans_socket_rank;
     uint64_t* trans_current_time = shared_data.trans_current_time;
@@ -982,14 +983,15 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
 
     int ret = 0;
     uint64_t current_time = picoquic_get_quic_time(quic);
-    // int64_t delay_max = 10000000;
+    int64_t delay_max = 10000000;
     struct sockaddr_storage addr_from;
     struct sockaddr_storage addr_to;
     int if_index_to;
     uint8_t buffer[1536];
     uint8_t send_buffer[1536];
     size_t send_length = 0;
-    int bytes_recv;
+    int bytes_recv = 0;
+    unsigned char received_ecn;
     uint64_t loop_count_time = current_time;
     int nb_loops = 0;
 
@@ -1020,7 +1022,22 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
     /* TODO: add stopping condition, was && (!just_once || !connection_done) */
     while (ret == 0) {
         int socket_rank = -1;
-        // int64_t delta_t = picoquic_get_next_wake_delay(quic, current_time, delay_max);
+        uint64_t current_time = picoquic_get_quic_time(quic);
+        int64_t delta_t = picoquic_get_next_wake_delay(quic, current_time, delay_max);
+        int64_t next_wake_time = current_time + delta_t;
+        struct timespec tv;
+        if (delta_t <= 0) {
+            tv.tv_sec = 0;
+            tv.tv_nsec  = 0;
+        } else {
+            if (delta_t > 10000000) {
+                tv.tv_sec = (long)10;
+                tv.tv_nsec  = 0;
+            } else {
+                tv.tv_sec = (long)(next_wake_time / 1000000);
+                tv.tv_nsec  = (long)((next_wake_time % 1000000) * 1000);
+            }
+        }
 
         // bytes_recv = picoquic_select_ex(s_socket, nb_sockets,
         //     &addr_from,
@@ -1028,47 +1045,57 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
         //     buffer, sizeof(buffer),
         //     delta_t, &socket_rank, &current_time);
         // wait the bytes from the master thread
+        
         pthread_mutex_lock(buffer_mutex);
-        pthread_cond_wait(nonEmpty, buffer_mutex);
-        unsigned char received_ecn = *trans_received_ecn;
-        bytes_recv = *trans_bytes;
-        if_index_to = *trans_if_index_to;
-        socket_rank = *trans_socket_rank;
-        current_time = *trans_current_time;
-        memcpy(&addr_to, trans_addr_to, sizeof(struct sockaddr_storage));
-        memcpy(&addr_from, trans_addr_from, sizeof(struct sockaddr_storage));
-        // memcpy(&peer_addr, trans_peer_addr, sizeof(struct sockaddr_storage));
-        // memcpy(&local_addr, trans_local_addr, sizeof(struct sockaddr_storage));
-        memcpy(buffer, trans_buffer, sizeof(buffer));
-        // memcpy(send_buffer, trans_send_buffer, sizeof(buffer));
-        memcpy(sock_af, trans_sock_af, sizeof(sock_af));
-        memcpy(s_socket, trans_s_socket, sizeof(s_socket));
-        nb_sockets = *trans_nb_sockets;
-        // memcpy(send_buffer, trans_send_buffer, sizeof(send_buffer));
-        pthread_mutex_unlock(buffer_mutex);
-        // printf("slave thread receive packet!\n");
-
-        nb_loops++;
-        if (nb_loops >= 100) {
-            uint64_t loop_delta = current_time - loop_count_time;
-
-            loop_count_time = current_time;
-            DBG_PRINTF("Looped %d times in %llu microsec, file: %d, line: %d\n",
-                nb_loops, (unsigned long long) loop_delta, quic->wake_file, quic->wake_line);
-            picoquic_log_context_free_app_message(quic, &log_cid, "Looped %d times in %llu microsec, file: %d, line: %d",
-                nb_loops, (unsigned long long) loop_delta, quic->wake_file, quic->wake_line);
-
-            nb_loops = 0;
+        int check = pthread_cond_timedwait(nonEmpty, buffer_mutex, &tv);
+        if (check == 0) {
+            // pthread_cond_wait(nonEmpty, buffer_mutex); //at some delta_t here?
+            printf("SLAVE RECEIVE SOME BYTES\n");
+            received_ecn = *trans_received_ecn;
+            bytes_recv = *trans_bytes;
+            if_index_to = *trans_if_index_to;
+            socket_rank = *trans_socket_rank;
+            current_time = *trans_current_time;
+            memcpy(&addr_to, trans_addr_to, sizeof(struct sockaddr_storage));
+            memcpy(&addr_from, trans_addr_from, sizeof(struct sockaddr_storage));
+            // memcpy(&peer_addr, trans_peer_addr, sizeof(struct sockaddr_storage));
+            // memcpy(&local_addr, trans_local_addr, sizeof(struct sockaddr_storage));
+            memcpy(buffer, trans_buffer, sizeof(buffer));
+            // memcpy(send_buffer, trans_send_buffer, sizeof(buffer));
+            memcpy(sock_af, trans_sock_af, sizeof(sock_af));
+            memcpy(s_socket, trans_s_socket, sizeof(s_socket));
+            nb_sockets = *trans_nb_sockets;
+            // memcpy(send_buffer, trans_send_buffer, sizeof(send_buffer));
+            pthread_mutex_unlock(buffer_mutex);
+            // printf("slave thread receive packet!\n");
+        } else
+        {
+            pthread_mutex_unlock(buffer_mutex);
+            printf("SLAVE THREAD TIME OUT\n");
         }
+        
 
-        if (bytes_recv < 0) {
-            ret = -1;
-        }
-        else {
+            nb_loops++;
+            if (nb_loops >= 100) {
+                uint64_t loop_delta = current_time - loop_count_time;
+
+                loop_count_time = current_time;
+                DBG_PRINTF("Looped %d times in %llu microsec, file: %d, line: %d\n",
+                    nb_loops, (unsigned long long) loop_delta, quic->wake_file, quic->wake_line);
+                picoquic_log_context_free_app_message(quic, &log_cid, "Looped %d times in %llu microsec, file: %d, line: %d",
+                    nb_loops, (unsigned long long) loop_delta, quic->wake_file, quic->wake_line);
+
+                nb_loops = 0;
+            }
+
+            // if (bytes_recv < 0) {
+            //     ret = -1;
+            // }
+            
             uint64_t loop_time = current_time;
             uint16_t current_recv_port = socket_port;
 
-            if (bytes_recv > 0) {
+            if (bytes_recv > 0 && check == 0) {
                 // printf("GOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
                 /* track the local port value if not known yet */
                 if (socket_port == 0 && nb_sockets == 1) {
@@ -1126,134 +1153,138 @@ int picoquic_packet_loop_with_migration_slave(picoquic_quic_t* quic,
                 }
             }
 
-            while (ret == 0) {
-                    struct sockaddr_storage peer_addr;
-    struct sockaddr_storage local_addr;
+        
+
+        while (ret == 0) {
+
+            struct sockaddr_storage peer_addr;
+            struct sockaddr_storage local_addr;
+        
+            // struct sockaddr_storage peer_addr;
+            // struct sockaddr_storage local_addr;
+            int if_index = dest_if;
+            int sock_ret = 0;
+            int sock_err = 0;
+            // last_cnx = quic->cnx_list;
+            // picoquic_cnx_t * connection_to_migrate = quic->cnx_list;
+            // if ((quic->cnx_list) != NULL && quic->cnx_list->callback_ctx!=NULL) {
+            //     if (((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag){
+            //         printf("migrated to the back-up server!!\n");
+            //         ((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag = 0;
+            //     // current_time = picoquic_get_quic_time(quic_back);
+            //     // loop_time = current_time;
+            //     // quic_back->cnx_list->next_wake_time = loop_time;
+            //     // picoquic_shallow_migrate(quic, quic_back);
+            //     // TODO: change the hashmap
+            //     // set the migration flag
+            //     // return a value
+            //     // let the back server continue to send
+            //     uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
+            //     char* string_key = uint64_to_string(key); 
+            //     if (cnx_id_table != NULL) {
+            //         printf("Add this migration connection to the hashmap!\n");
+            //         hashmap_put(cnx_id_table, string_key, strlen(string_key), "2");
+            //     } else {
+            //         printf("table is NULL\n");
+            //     }
+            //     quic = quic_back;
+            // }
+            // }
+            // printf("migration flag in loop is%d\n",*migration_flag);
             
-                // struct sockaddr_storage peer_addr;
-                // struct sockaddr_storage local_addr;
-                int if_index = dest_if;
-                int sock_ret = 0;
-                int sock_err = 0;
-                // last_cnx = quic->cnx_list;
-                // picoquic_cnx_t * connection_to_migrate = quic->cnx_list;
-                // if ((quic->cnx_list) != NULL && quic->cnx_list->callback_ctx!=NULL) {
-                //     if (((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag){
-                //         printf("migrated to the back-up server!!\n");
-                //         ((sample_server_migration_ctx_t *) (quic->cnx_list->callback_ctx))->migration_flag = 0;
-                //     // current_time = picoquic_get_quic_time(quic_back);
-                //     // loop_time = current_time;
-                //     // quic_back->cnx_list->next_wake_time = loop_time;
-                //     // picoquic_shallow_migrate(quic, quic_back);
-                //     // TODO: change the hashmap
-                //     // set the migration flag
-                //     // return a value
-                //     // let the back server continue to send
-                //     uint64_t key = picoquic_connection_id_hash(&connection_to_migrate->local_cnxid_first->cnx_id);
-                //     char* string_key = uint64_to_string(key); 
-                //     if (cnx_id_table != NULL) {
-                //         printf("Add this migration connection to the hashmap!\n");
-                //         hashmap_put(cnx_id_table, string_key, strlen(string_key), "2");
-                //     } else {
-                //         printf("table is NULL\n");
-                //     }
-                //     quic = quic_back;
-                // }
-                // }
-                // printf("migration flag in loop is%d\n",*migration_flag);
-                
-                // once the migration is done call quic = quic_back
+            // once the migration is done call quic = quic_back
 
-                // printf("SLAVE SEND PACKET!!!!!!!!\n");
-                // char* key = malloc(128 * sizeof(char));
-                    // memset(key, '0', 128);
-                    // picoquic_addr_text((struct sockaddr *)&peer_addr, key, 128);
-                // printf("SLAVE %d THREAD send length is %ld\n",id, send_length);
-                // free(key);
-                
-                ret = picoquic_prepare_next_packet(quic, loop_time,
-                    send_buffer, sizeof(send_buffer), &send_length,
-                    &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
-                if (send_length > 0) {
-                    char* key = malloc(128 * sizeof(char));
-                    memset(key, '0', 128);
-                    picoquic_addr_text((struct sockaddr *)&peer_addr, key, 128);
-                    printf("SLAVE %d THREAD send length is %ld to %s\n",id, send_length, key);
-                    free(key);
+            // printf("SLAVE SEND PACKET!!!!!!!!\n");
+            // char* key = malloc(128 * sizeof(char));
+                // memset(key, '0', 128);
+                // picoquic_addr_text((struct sockaddr *)&peer_addr, key, 128);
+            // printf("SLAVE %d THREAD send length is %ld\n",id, send_length);
+            // free(key);
+            
+            ret = picoquic_prepare_next_packet(quic, loop_time,
+                send_buffer, sizeof(send_buffer), &send_length,
+                &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
+            if (send_length > 0) {
+                char* key = malloc(128 * sizeof(char));
+                memset(key, '0', 128);
+                picoquic_addr_text((struct sockaddr *)&peer_addr, key, 128);
+                // printf("SLAVE %d THREAD send length is %ld to %s\n",id, send_length, key);
+                free(key);
+            }
+            
+            // printf("SLAVE %d THREAD send bytes!\n",id);
+
+            /*
+            
+            ret = picoquic_prepare_next_packet(quic_back, loop_time,
+                send_buffer, sizeof(send_buffer), &send_length,
+                &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
+
+            */
+
+            if (ret == 0 && send_length > 0) {
+                // printf("send packet!\n");
+                SOCKET_TYPE send_socket = INVALID_SOCKET;
+                loop_count_time = current_time;
+                nb_loops = 0;
+                for (int i = 0; i < nb_sockets; i++) {
+                    if (sock_af[i] == peer_addr.ss_family) {
+                        send_socket = s_socket[i];
+                        break;
+                    }
                 }
-                
-                // printf("SLAVE %d THREAD send bytes!\n",id);
 
-                /*
-                
-                ret = picoquic_prepare_next_packet(quic_back, loop_time,
-                    send_buffer, sizeof(send_buffer), &send_length,
-                    &peer_addr, &local_addr, &if_index, &log_cid, &last_cnx);
-
-                */
-
-                if (ret == 0 && send_length > 0) {
-                    // printf("send packet!\n");
-                    SOCKET_TYPE send_socket = INVALID_SOCKET;
-                    loop_count_time = current_time;
-                    nb_loops = 0;
-                    for (int i = 0; i < nb_sockets; i++) {
-                        if (sock_af[i] == peer_addr.ss_family) {
-                            send_socket = s_socket[i];
-                            break;
-                        }
-                    }
-
-                    if (send_socket == INVALID_SOCKET) {
-                        // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-                        sock_ret = -1;
-                        sock_err = -1;
-                    }
-                    else {
-                        if (testing_migration) {
-                            /* This code path is only used in the migration tests */
-                            uint16_t send_port = (local_addr.ss_family == AF_INET) ?
-                                ((struct sockaddr_in*) & local_addr)->sin_port :
-                                ((struct sockaddr_in6*) & local_addr)->sin6_port;
-
-                            if (send_port == next_port) {
-                                send_socket = s_socket[nb_sockets - 1];
-                            }
-                        }
-                        pthread_mutex_lock(socket_mutex);
-                        sock_ret = picoquic_send_through_socket(send_socket,
-                            (struct sockaddr*) & peer_addr, (struct sockaddr*) & local_addr, if_index,
-                            (const char*)send_buffer, (int)send_length, &sock_err);
-                        pthread_mutex_unlock(socket_mutex);
-                        // printf("sock_ret is %d\n", sock_ret);
-                    }
-
-                    if (sock_ret <= 0) {
-                        if (last_cnx == NULL) {
-                            picoquic_log_context_free_app_message(quic, &log_cid, "Could not send message to AF_to=%d, AF_from=%d, if=%d, ret=%d, err=%d",
-                                peer_addr.ss_family, local_addr.ss_family, if_index, sock_ret, sock_err);
-                        }
-                        else {
-                            picoquic_log_app_message(last_cnx, "Could not send message to AF_to=%d, AF_from=%d, if=%d, ret=%d, err=%d",
-                                peer_addr.ss_family, local_addr.ss_family, if_index, sock_ret, sock_err);
-                            
-                            if (picoquic_socket_error_implies_unreachable(sock_err)) {
-                                picoquic_notify_destination_unreachable(last_cnx, current_time,
-                                    (struct sockaddr*) & peer_addr, (struct sockaddr*) & local_addr, if_index,
-                                    sock_err);
-                            }
-                        }
-                    }
+                if (send_socket == INVALID_SOCKET) {
+                    // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                    sock_ret = -1;
+                    sock_err = -1;
                 }
                 else {
-                    break;
+                    if (testing_migration) {
+                        /* This code path is only used in the migration tests */
+                        uint16_t send_port = (local_addr.ss_family == AF_INET) ?
+                            ((struct sockaddr_in*) & local_addr)->sin_port :
+                            ((struct sockaddr_in6*) & local_addr)->sin6_port;
+
+                        if (send_port == next_port) {
+                            send_socket = s_socket[nb_sockets - 1];
+                        }
+                    }
+                    pthread_mutex_lock(socket_mutex);
+                    sock_ret = picoquic_send_through_socket(send_socket,
+                        (struct sockaddr*) & peer_addr, (struct sockaddr*) & local_addr, if_index,
+                        (const char*)send_buffer, (int)send_length, &sock_err);
+                    pthread_mutex_unlock(socket_mutex);
+                    // printf("sock_ret is %d\n", sock_ret);
+                }
+
+                if (sock_ret <= 0) {
+                    if (last_cnx == NULL) {
+                        picoquic_log_context_free_app_message(quic, &log_cid, "Could not send message to AF_to=%d, AF_from=%d, if=%d, ret=%d, err=%d",
+                            peer_addr.ss_family, local_addr.ss_family, if_index, sock_ret, sock_err);
+                    }
+                    else {
+                        picoquic_log_app_message(last_cnx, "Could not send message to AF_to=%d, AF_from=%d, if=%d, ret=%d, err=%d",
+                            peer_addr.ss_family, local_addr.ss_family, if_index, sock_ret, sock_err);
+                        
+                        if (picoquic_socket_error_implies_unreachable(sock_err)) {
+                            picoquic_notify_destination_unreachable(last_cnx, current_time,
+                                (struct sockaddr*) & peer_addr, (struct sockaddr*) & local_addr, if_index,
+                                sock_err);
+                        }
+                    }
                 }
             }
-
-            if (ret == 0 && loop_callback != NULL) {
-                ret = loop_callback(quic, picoquic_packet_loop_after_send, loop_callback_ctx);
+            else {
+                // printf("SLLLLLLLLLLLLLLLLLLLLLLLLLLAVE BREAK\n");
+                break;
             }
         }
+
+        if (ret == 0 && loop_callback != NULL) {
+            ret = loop_callback(quic, picoquic_packet_loop_after_send, loop_callback_ctx);
+        }
+        
 
         if (ret == PICOQUIC_NO_ERROR_SIMULATE_NAT || ret == PICOQUIC_NO_ERROR_SIMULATE_MIGRATION) {
             /* Two pseudo error codes used for testing migration!
