@@ -4306,7 +4306,7 @@ int create_picoquic_connnection_from_migration_data(picoquic_migration_data *cnx
 
 int picoquic_shallow_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_server) {
     int ret = 0;
-    printf("time to migrate!\n");
+    // printf("time to migrate!\n");
     //pick a connection to migrate
     picoquic_cnx_t* connection_to_migrate = NULL;
     //need to be changed in the future, for now just get one connection!
@@ -4341,6 +4341,6 @@ int picoquic_shallow_migrate(picoquic_quic_t* old_server, picoquic_quic_t* new_s
 /* Register or update default address and reset secret */
     // picoquic_register_net_secret(cnx);
     picoquic_register_net_icid(connection_to_migrate);
-    printf("shallow copy finished here\n");
+    // printf("shallow copy finished here\n");
     return ret;
 }
