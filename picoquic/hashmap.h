@@ -221,7 +221,7 @@ int hashmap_create(const unsigned initial_size,
 int hashmap_put(struct hashmap_s *const m, const char *const key,
                 const unsigned len, void *const value) {
   unsigned int index;
-  printf("PUT key!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%s\n", key);
+  // printf("PUT key!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%s\n", key);
 
   /* Find a place to put our value. */
   while (!hashmap_hash_helper(m, key, len, &index)) {
@@ -266,7 +266,7 @@ void *hashmap_get(const struct hashmap_s *const m, const char *const key,
 
     curr = (curr + 1) % m->table_size;
   }
-  printf("CANT FIND\n");
+  // printf("CANT FIND\n");
   /* Not found */
   return HASHMAP_NULL;
 }
